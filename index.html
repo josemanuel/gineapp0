@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es" data-theme="light">
+<html lang="es" data-theme="dark">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -124,7 +124,7 @@ input[type=range].fc{padding:4px 0;border:none;background:transparent;cursor:poi
 /* MODAL */
 .ovl{position:fixed;inset:0;z-index:300;background:rgba(0,0,0,.65);backdrop-filter:blur(4px);display:flex;align-items:flex-end;opacity:0;pointer-events:none;transition:opacity .22s}
 .ovl.open{opacity:1;pointer-events:all}
-.modal{background:var(--bg2);border:1px solid var(--border2);border-radius:18px 18px 0 0;width:100%;max-height:90vh;overflow-y:auto;transform:translateY(60px);transition:transform .25s}
+.modal{background:var(--bg2);border:1px solid var(--border2);border-radius:18px 18px 0 0;width:100%;max-height:90vh;overflow-y:auto;-webkit-overflow-scrolling:touch;transform:translateY(60px);transition:transform .25s}
 .ovl.open .modal{transform:translateY(0)}
 .mhd{padding:15px 17px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:var(--bg2);z-index:10}
 .mt2{font-size:16px;font-weight:700}
@@ -144,6 +144,7 @@ input[type=range].fc{padding:4px 0;border:none;background:transparent;cursor:poi
 .ptg{display:flex;gap:3px;flex-wrap:wrap;margin-top:3px}
 .pac{display:flex;gap:5px;opacity:0;transition:opacity .15s;flex-shrink:0}
 .pr:hover .pac,.pac.vis{opacity:1}
+@media(max-width:768px){.pac{opacity:1}}
 /* TIMELINE */
 .tl{position:relative;padding-left:20px}
 .tl::before{content:'';position:absolute;left:4px;top:0;bottom:0;width:2px;background:var(--border2)}
@@ -194,6 +195,9 @@ input[type=range].fc{padding:4px 0;border:none;background:transparent;cursor:poi
 .cp{color:var(--pk)}.cpu{color:var(--pu)}.cg{color:var(--gr)}.co{color:var(--or)}.cr{color:var(--rd)}
 .wrap{flex-wrap:wrap}.aic{align-items:center}.jcb{justify-content:space-between}.jcc{justify-content:center}
 .flex{display:flex}.fc2{flex-direction:column}
+/* Dashboard layout */
+#dashGrid{grid-template-columns:1fr 1fr}
+@media(max-width:900px){#dashGrid{grid-template-columns:1fr}}
 /* Smooth scroll */
 html{scroll-behavior:smooth}
 /* Better touch targets on mobile */
@@ -213,6 +217,8 @@ button,a{touch-action:manipulation}
 }
 /* RESPONSIVE */
 @media(max-width:768px){
+  /* Chips scroll horizontally on very small screens */
+  .chips{flex-wrap:wrap;max-height:none}
   .sidebar{transform:translateX(-100%)}
   .sidebar.open{transform:translateX(0);box-shadow:var(--shadow)}
   .main{margin-left:0}
@@ -269,8 +275,8 @@ button,a{touch-action:manipulation}
   <header class="topbar">
     <button class="btn bic bg hmenu" onclick="tog()">☰</button>
     <div class="ttl" id="ttl">Dashboard</div>
-    <div class="sw"><span style="color:var(--text3);font-size:13px">🔍</span><input id="gs" placeholder="Buscar paciente…" oninput="flt(this.value)"></div>
-    <button class="tbtn" id="thbtn" onclick="toggleTheme()" title="Cambiar tema">🌙</button>
+    <div class="sw"><span style="color:var(--text3);font-size:13px">🔍</span><input id="gs" placeholder="Buscar…" oninput="gSearch(this.value)" onfocus="gSearch(this.value)"></div>
+    <button class="tbtn" id="thbtn" onclick="toggleTheme()" title="Modo claro/oscuro" style="flex-shrink:0">🌙</button>
   </header>
   <div class="content">
 <!-- DASHBOARD -->
@@ -281,13 +287,14 @@ button,a{touch-action:manipulation}
     <div class="stat so"><div class="si">🔵</div><div class="sv" id="stM">0</div><div class="sl">Miomas</div></div>
     <div class="stat sg"><div class="si">🌱</div><div class="sv" id="stF">0</div><div class="sl">Desean gestación</div></div>
   </div>
-  <div class="g2 mt4">
+  <div class="g2 mt4" id="dashGrid">
     <div class="card">
       <div class="chd"><div><div class="ct">Últimas pacientes</div><div class="cs">Registros recientes</div></div><button class="btn bg bsm" onclick="go('pacientes',null)">Ver todas →</button></div>
       <div id="dRec"></div>
     </div>
     <div class="card">
-      <div class="chd"><div class="ct">Distribución</div></div>
+      <div class="chd"><div class="ct">Distribución por patología</div></div>
+      <div id="dashDonut" class="mb3"></div>
       <div class="mb3"><div class="flex jcb sm mb2"><span>Endometriosis</span><span class="cp f6" id="pE">0%</span></div><div class="rbar"><div class="rf" id="bE" style="width:0%;background:var(--pk)"></div></div></div>
       <div class="mb3"><div class="flex jcb sm mb2"><span>Miomas</span><span class="co f6" id="pM">0%</span></div><div class="rbar"><div class="rf" id="bM" style="width:0%;background:var(--or)"></div></div></div>
       <div class="mb3"><div class="flex jcb sm mb2"><span>Ambas</span><span class="cpu f6" id="pA">0%</span></div><div class="rbar"><div class="rf" id="bA" style="width:0%;background:var(--pu)"></div></div></div>
@@ -337,7 +344,7 @@ button,a{touch-action:manipulation}
     <div id="ft0">
       <div class="fr2"><div class="fg"><label class="fl">Nombre completo *</label><input class="fc" id="fN" placeholder="Apellidos, Nombre"></div><div class="fg"><label class="fl">NHC / Expediente</label><input class="fc" id="fNHC" placeholder="Número historia"></div></div>
       <div class="fr3">
-        <div class="fg"><label class="fl">Fecha nacimiento</label><input type="date" class="fc" id="fFN"></div>
+        <div class="fg"><label class="fl">Fecha nacimiento</label><input type="date" class="fc" id="fFN" placeholder="dd/mm/aaaa"></div>
         <div class="fg"><label class="fl">Estado civil</label><select class="fc" id="fEC"><option value="">—</option><option>Soltera</option><option>Casada</option><option>Pareja estable</option><option>Divorciada</option><option>Viuda</option></select></div>
         <div class="fg"><label class="fl">Teléfono</label><input class="fc" id="fTel" placeholder="+34 600 000 000"></div>
       </div>
@@ -907,8 +914,20 @@ button,a{touch-action:manipulation}
   <button class="bi" id="bn1" onclick="bnv('pacientes',1)"><span class="ic">👩</span>Pacientes</button>
   <button class="bi" id="bn2" onclick="bnv('nueva',2)"><span class="ic">➕</span>Nueva</button>
   <button class="bi" id="bn3" onclick="bnv('algoritmos',3)"><span class="ic">🔬</span>Algoritmos</button>
-  <button class="bi" id="bn4" onclick="bnv('informes',4)"><span class="ic">📄</span>Informes</button>
+  <button class="bi" id="bn4" onclick="toggleMoreMenu()"><span class="ic">⋯</span>Más</button>
 </nav>
+<!-- MORE MENU -->
+<div id="moreMenu" style="display:none;position:fixed;bottom:60px;right:0;left:0;z-index:140;background:var(--bg2);border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:8px 0;box-shadow:0 -4px 20px rgba(0,0,0,.2)">
+  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:0">
+    <button class="bi" style="padding:12px 4px" onclick="moreGo('tratamiento')"><span class="ic" style="font-size:17px">💊</span>Tratamiento</button>
+    <button class="bi" style="padding:12px 4px" onclick="moreGo('fertilidad')"><span class="ic" style="font-size:17px">🌱</span>Fertilidad</button>
+    <button class="bi" style="padding:12px 4px" onclick="moreGo('scores')"><span class="ic" style="font-size:17px">📏</span>Escalas</button>
+    <button class="bi" style="padding:12px 4px" onclick="moreGo('guias')"><span class="ic" style="font-size:17px">📋</span>Guías</button>
+    <button class="bi" style="padding:12px 4px;grid-column:span 2" onclick="moreGo('informes')"><span class="ic" style="font-size:17px">📄</span>Informes</button>
+    <button class="bi" style="padding:12px 4px;grid-column:span 2" onclick="toggleTheme();toggleMoreMenu()"><span class="ic" style="font-size:17px" id="themeIcMob">🌙</span>Tema</button>
+  </div>
+</div>
+<div id="moreOverlay" style="display:none;position:fixed;inset:0;z-index:139" onclick="toggleMoreMenu()"></div>
 <!-- PATIENT MODAL -->
 <div class="ovl" id="ptM">
   <div class="modal">
@@ -940,10 +959,17 @@ const gid=()=>'p_'+Date.now()+'_'+Math.random().toString(36).slice(2,7);
 let dark=localStorage.getItem('gapp2_theme')!=='light';
 function applyT(){
   document.documentElement.setAttribute('data-theme',dark?'dark':'light');
-  document.getElementById('thbtn').textContent=dark?'🌙':'☀️';
+  const btn=document.getElementById('thbtn');
+  if(btn)btn.textContent=dark?'🌙':'☀️';
+  const mob=document.getElementById('themeIcMob');
+  if(mob)mob.textContent=dark?'☀️':'🌙';
   localStorage.setItem('gapp2_theme',dark?'dark':'light');
 }
-function toggleTheme(){dark=!dark;applyT();}
+function toggleTheme(){
+  dark=!dark;applyT();
+  const mob=document.getElementById('themeIcMob');
+  if(mob)mob.textContent=dark?'☀️':'🌙';
+}
 applyT();
 
 // ═══════════════════════════════════════════════
@@ -970,9 +996,47 @@ function go(id,btn){
 function bnv(id,n){
   go(id,null);
   document.querySelectorAll('.bi').forEach((b,i)=>b.classList.toggle('on',i===n));
+  // close more menu if open
+  closeMM();
 }
 function tog(){document.getElementById('sb').classList.toggle('open');document.getElementById('mov').classList.toggle('open');}
 function cls(){document.getElementById('sb').classList.remove('open');document.getElementById('mov').classList.remove('open');}
+
+// More menu (mobile)
+function toggleMoreMenu(){
+  const m=document.getElementById('moreMenu');
+  const o=document.getElementById('moreOverlay');
+  const open=m.style.display==='block';
+  m.style.display=open?'none':'block';
+  o.style.display=open?'none':'block';
+  // sync theme icon
+  const ic=document.getElementById('themeIcMob');
+  if(ic)ic.textContent=dark?'☀️':'🌙';
+}
+function closeMM(){
+  document.getElementById('moreMenu').style.display='none';
+  document.getElementById('moreOverlay').style.display='none';
+}
+function moreGo(id){
+  closeMM();
+  go(id,null);
+  // deactivate bottom nav items
+  document.querySelectorAll('.bi').forEach(b=>b.classList.remove('on'));
+  document.getElementById('bn4').classList.add('on');
+}
+
+// Global search — navigates to patient list and filters
+function gSearch(v){
+  if(!v){return;}
+  // navigate to pacientes section if not already there
+  const sec=document.getElementById('s-pacientes');
+  if(!sec.classList.contains('on')){
+    go('pacientes',null);
+    document.querySelectorAll('.bi').forEach((b,i)=>b.classList.toggle('on',i===1));
+  }
+  rPL();
+}
+function flt(v){rPL();}
 
 // ═══════════════════════════════════════════════
 // TABS
@@ -1123,7 +1187,7 @@ const dxT=dx=>({endometriosis:'<span class="tag tp">Endometriosis</span>',miomas
 
 function rPL(){
   const cont=document.getElementById('pList');
-  const search=document.getElementById('gs').value.toLowerCase();
+  const search=(document.getElementById('gs').value||'').toLowerCase();
   const dF=document.getElementById('fltD').value;
   const gF=document.getElementById('fltG').value;
   let list=DB.filter(p=>{
@@ -1162,19 +1226,70 @@ function vPt(id){
   oM();
 }
 function bCard(p){
-  return`<div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;padding-bottom:13px;border-bottom:1px solid var(--border)">
+  // Check upcoming review
+  let revAlert='';
+  if(p.proxRev){
+    const d=new Date(p.proxRev),now=new Date(),diff=Math.ceil((d-now)/(24*3600*1000));
+    if(diff<0) revAlert=`<div class="box br mt2u xs">⚠️ Revisión vencida: ${d.toLocaleDateString('es')}</div>`;
+    else if(diff<=14) revAlert=`<div class="box bw mt2u xs">⏰ Revisión en ${diff} días: ${d.toLocaleDateString('es')}</div>`;
+    else revAlert=`<div class="xs c2 mt2u">⏰ Próxima revisión: ${d.toLocaleDateString('es')}</div>`;
+  }
+  // History line
+  const created=new Date(p.createdAt).toLocaleDateString('es',{day:'numeric',month:'short',year:'numeric'});
+  const updated=p.updatedAt&&p.updatedAt!==p.createdAt?` · Actualizado: ${new Date(p.updatedAt).toLocaleDateString('es',{day:'numeric',month:'short'})}`:'' ;
+  return`
+  <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;padding-bottom:13px;border-bottom:1px solid var(--border)">
     <div class="pav" style="width:46px;height:46px;font-size:16px;background:${avC(p.nombre)}1a;color:${avC(p.nombre)};border:2px solid ${avC(p.nombre)}33;flex-shrink:0">${ini(p.nombre)}</div>
-    <div><div style="font-size:16px;font-weight:700">${p.nombre}</div>
-    <div class="sm c2">${age(p.fechaNac)} años${p.paridad?' · '+p.paridad:''}${p.estadoCivil?' · '+p.estadoCivil:''}</div>
-    <div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:4px">${dxT(p.dx)}${p.deseoGestacion!=='no'?'<span class="tag tg">🌱 Gestación</span>':''}</div></div></div>
-  ${p.sintomas&&p.sintomas.length?`<div class="mb3"><div class="xs c3 f6 mb2" style="text-transform:uppercase;letter-spacing:.8px">Síntomas</div><div style="display:flex;flex-wrap:wrap;gap:4px">${p.sintomas.map(s=>`<span class="tag tp">${s}</span>`).join('')}</div>${+p.evaD>0?`<div class="xs c2 mt2u">EVA Dismenorrea: ${p.evaD}/10 · EVA Dolor: ${p.evaP}/10</div>`:''}</div>`:''}
-  ${p.dx==='endometriosis'||p.dx==='ambas'?`<div style="border-left:3px solid var(--pk);padding-left:10px;margin-bottom:12px"><div class="xs f6 cp mb1" style="text-transform:uppercase;letter-spacing:.8px">Endometriosis</div><div class="sm">${p.asrm?'Estadio '+p.asrm:''}${p.metodoDx?' · '+p.metodoDx:''}</div>${p.locEndo&&p.locEndo.length?`<div style="display:flex;flex-wrap:wrap;gap:3px;margin-top:4px">${p.locEndo.map(l=>`<span class="tag tp">${l}</span>`).join('')}</div>`:''}</div>`:''}
-  ${p.dx==='miomas'||p.dx==='ambas'?`<div style="border-left:3px solid var(--or);padding-left:10px;margin-bottom:12px"><div class="xs f6 co mb1" style="text-transform:uppercase;letter-spacing:.8px">Miomas</div><div class="sm">FIGO ${p.figo||'?'} · ${p.numMiomas||'?'} mioma(s) · ${p.tamMioma||'?'} mm${p.hgb?' · Hgb: '+p.hgb+' g/dL':''}</div></div>`:''}
-  ${p.txMed&&p.txMed.length?`<div class="mb3"><div class="xs c3 f6 mb2" style="text-transform:uppercase;letter-spacing:.8px">Trat. médico</div><div style="display:flex;flex-wrap:wrap;gap:3px">${p.txMed.map(t=>`<span class="tag tpu">${t}</span>`).join('')}</div></div>`:''}
-  ${p.txQx&&p.txQx.length?`<div class="mb3"><div class="xs c3 f6 mb2" style="text-transform:uppercase;letter-spacing:.8px">Cirugías</div><div style="display:flex;flex-wrap:wrap;gap:3px">${p.txQx.map(t=>`<span class="tag to">${t}</span>`).join('')}</div></div>`:''}
+    <div style="flex:1;min-width:0">
+      <div style="font-size:16px;font-weight:700">${p.nombre}</div>
+      <div class="sm c2">${age(p.fechaNac)} años${p.paridad?' · '+p.paridad:''}${p.estadoCivil?' · '+p.estadoCivil:''}</div>
+      <div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:4px">${dxT(p.dx)}${p.deseoGestacion!=='no'?'<span class="tag tg">🌱 Gestación</span>':''}</div>
+    </div>
+  </div>
+  ${p.nhc?`<div class="xs c2 mb3" style="font-family:monospace">NHC: ${p.nhc}${p.telefono?' · 📞 '+p.telefono:''}</div>`:''}
+  ${p.sintomas&&p.sintomas.length?`
+    <div class="mb3">
+      <div class="xs c3 f6 mb2" style="text-transform:uppercase;letter-spacing:.8px">Síntomas</div>
+      <div style="display:flex;flex-wrap:wrap;gap:4px">${p.sintomas.map(s=>`<span class="tag tp">${s}</span>`).join('')}</div>
+      ${+p.evaD>0?`<div class="xs c2 mt2u">EVA Dismenorrea: <strong>${p.evaD}/10</strong> · EVA Dolor: <strong>${p.evaP}/10</strong>${p.duracion?' · '+p.duracion:''}</div>`:''}
+    </div>`:''}
+  ${p.dx==='endometriosis'||p.dx==='ambas'?`
+    <div style="border-left:3px solid var(--pk);padding-left:10px;margin-bottom:12px">
+      <div class="xs f6 cp mb1" style="text-transform:uppercase;letter-spacing:.8px">Endometriosis</div>
+      <div class="sm">${p.asrm?`<span class="tag tp">Estadio ${p.asrm}</span> `:''} ${p.metodoDx?'<span class="tag tgr">'+p.metodoDx+'</span>':''}</div>
+      ${p.locEndo&&p.locEndo.length?`<div style="display:flex;flex-wrap:wrap;gap:3px;margin-top:5px">${p.locEndo.map(l=>`<span class="tag tp">${l}</span>`).join('')}</div>`:''}
+      ${p.tamEndo?`<div class="xs c2 mt2u">Endometrioma: ${p.tamEndo}mm</div>`:''}
+      ${p.adenomiosis&&p.adenomiosis!=='No'?`<div class="xs c2">Adenomiosis: ${p.adenomiosis}</div>`:''}
+    </div>`:''}
+  ${p.dx==='miomas'||p.dx==='ambas'?`
+    <div style="border-left:3px solid var(--or);padding-left:10px;margin-bottom:12px">
+      <div class="xs f6 co mb1" style="text-transform:uppercase;letter-spacing:.8px">Miomas</div>
+      <div class="sm">${p.figo!==undefined&&p.figo!==''?`<span class="tag to">FIGO ${p.figo}</span> `:''}${p.numMiomas||'?'} mioma(s) · Mayor: ${p.tamMioma||'?'} mm${p.volUt?' · Vol. uterino: '+p.volUt+' cc':''}</div>
+      ${p.hgb?`<div class="xs c2 mt2u">Hgb: <strong>${p.hgb} g/dL</strong>${parseFloat(p.hgb)<11?' ⚠️ Anemia':''} ${p.amh?'· AMH: '+p.amh+' ng/mL':''}</div>`:''}
+      ${p.sintMioma&&p.sintMioma.length?`<div style="display:flex;flex-wrap:wrap;gap:3px;margin-top:5px">${p.sintMioma.map(s=>`<span class="tag to">${s}</span>`).join('')}</div>`:''}
+    </div>`:''}
+  ${p.txMed&&p.txMed.length?`
+    <div class="mb3">
+      <div class="xs c3 f6 mb2" style="text-transform:uppercase;letter-spacing:.8px">Tratamiento médico</div>
+      <div style="display:flex;flex-wrap:wrap;gap:3px">${p.txMed.map(t=>`<span class="tag tpu">${t}</span>`).join('')}</div>
+      ${p.respTx?`<div class="xs c2 mt2u">Respuesta: ${p.respTx}</div>`:''}
+    </div>`:''}
+  ${p.txQx&&p.txQx.length?`
+    <div class="mb3">
+      <div class="xs c3 f6 mb2" style="text-transform:uppercase;letter-spacing:.8px">Intervenciones quirúrgicas</div>
+      <div style="display:flex;flex-wrap:wrap;gap:3px">${p.txQx.map(t=>`<span class="tag to">${t}</span>`).join('')}</div>
+    </div>`:''}
+  ${(p.deseoGestacion==='si'||p.deseoGestacion==='futuro')&&(p.efi||p.factorMasc||p.tra)?`
+    <div style="border-left:3px solid var(--gr);padding-left:10px;margin-bottom:12px">
+      <div class="xs f6 cg mb1" style="text-transform:uppercase;letter-spacing:.8px">Fertilidad</div>
+      ${p.efi?`<div class="sm">EFI: <strong>${p.efi}/10</strong> — ${+p.efi>=7?'✅ Intento natural/IUI':+p.efi>=4?'⚠️ Intermedio':'🚫 FIV recomendada'}</div>`:''}
+      ${p.factorMasc?`<div class="xs c2">Factor masculino: ${p.factorMasc}</div>`:''}
+      ${p.permTub?`<div class="xs c2">Permeabilidad tubárica: ${p.permTub}</div>`:''}
+      ${p.tiempoInf?`<div class="xs c2">Tiempo infertilidad: ${p.tiempoInf} meses</div>`:''}
+    </div>`:''}
   ${p.planTx?`<div class="box bi2 mb3"><div class="bt">📋 Plan terapéutico</div><div class="sm">${p.planTx}</div></div>`:''}
-  ${p.proxRev?`<div class="xs c2 mt2u">⏰ Próxima revisión: ${new Date(p.proxRev).toLocaleDateString('es')}</div>`:''}
-  <div class="xs c3 mt3">Registrado: ${new Date(p.createdAt).toLocaleDateString('es',{day:'numeric',month:'short',year:'numeric'})}</div>`;
+  ${revAlert}
+  <div class="xs c3" style="margin-top:12px;padding-top:8px;border-top:1px solid var(--border)">📅 Registrado: ${created}${updated}</div>`;
 }
 function oM(){document.getElementById('ptM').classList.add('open');document.body.style.overflow='hidden';}
 function cM(){document.getElementById('ptM').classList.remove('open');document.body.style.overflow='';}
@@ -1183,10 +1298,12 @@ function cM(){document.getElementById('ptM').classList.remove('open');document.b
 // STATS & DASHBOARD
 // ═══════════════════════════════════════════════
 function uSt(){
-  const t=DB.length,en=DB.filter(p=>p.dx==='endometriosis'||p.dx==='ambas').length;
+  const t=DB.length;
+  const en=DB.filter(p=>p.dx==='endometriosis'||p.dx==='ambas').length;
   const mi=DB.filter(p=>p.dx==='miomas'||p.dx==='ambas').length;
   const fe=DB.filter(p=>p.deseoGestacion==='si'||p.deseoGestacion==='futuro').length;
   const am=DB.filter(p=>p.dx==='ambas').length;
+  const sp=DB.filter(p=>p.dx==='sospecha').length;
   document.getElementById('stT').textContent=t;
   document.getElementById('stE').textContent=en;
   document.getElementById('stM').textContent=mi;
@@ -1196,16 +1313,96 @@ function uSt(){
   document.getElementById('pM').textContent=pct(mi)+'%';document.getElementById('bM').style.width=pct(mi)+'%';
   document.getElementById('pA').textContent=pct(am)+'%';document.getElementById('bA').style.width=pct(am)+'%';
   document.getElementById('pF').textContent=pct(fe)+'%';document.getElementById('bF').style.width=pct(fe)+'%';
+  buildDonut(t,en,mi,am,sp);
+  buildReviewAlerts();
 }
-function uBdg(){document.getElementById('bdgP').textContent=DB.length;}
+
+function buildDonut(t,en,mi,am,sp){
+  const el=document.getElementById('dashDonut');
+  if(!el)return;
+  if(!t){el.innerHTML='<div class="xs c2 tc" style="padding:20px">Sin datos aún</div>';return;}
+  const endoOnly=DB.filter(p=>p.dx==='endometriosis').length;
+  const miomaOnly=DB.filter(p=>p.dx==='miomas').length;
+  const sinDx=DB.filter(p=>!p.dx||p.dx==='').length;
+  const segs=[
+    {val:endoOnly,col:'#c462a4',lbl:'Endometriosis'},
+    {val:miomaOnly,col:'#e89830',lbl:'Miomas'},
+    {val:am,col:'#7060f0',lbl:'Ambas'},
+    {val:sp,col:'#8a8ca6',lbl:'Sospecha'},
+    {val:sinDx,col:'#3a3b4e',lbl:'Sin diagnóstico'}
+  ].filter(s=>s.val>0);
+  const r=52,cx=70,cy=70,sw=20,circ=2*Math.PI*r;
+  let cum=0,paths='';
+  segs.forEach(s=>{
+    const frac=s.val/t;
+    const dash=circ*frac;
+    const offset=circ*(1-cum);
+    paths+=`<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${s.col}" stroke-width="${sw}" stroke-dasharray="${dash} ${circ-dash}" stroke-dashoffset="${offset}" transform="rotate(-90 ${cx} ${cy})" style="transition:stroke-dasharray .5s ease"/>`;
+    cum+=frac;
+  });
+  const legend=segs.map(s=>`<div style="display:flex;align-items:center;gap:5px;font-size:11px"><div style="width:8px;height:8px;border-radius:50%;background:${s.col};flex-shrink:0"></div><span style="color:var(--text2)">${s.lbl}</span><span style="margin-left:auto;font-weight:600">${s.val}</span></div>`).join('');
+  el.innerHTML=`<div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+    <div style="position:relative;flex-shrink:0">
+      <svg width="140" height="140" viewBox="0 0 140 140">
+        <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="var(--bg3)" stroke-width="${sw}"/>
+        ${paths}
+      </svg>
+      <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none">
+        <div style="font-size:22px;font-weight:700;line-height:1">${t}</div>
+        <div style="font-size:10px;color:var(--text2)">pacientes</div>
+      </div>
+    </div>
+    <div style="flex:1;min-width:90px;display:flex;flex-direction:column;gap:6px">${legend}</div>
+  </div>`;
+}
+
+function buildReviewAlerts(){
+  const el=document.getElementById('dashAlerts');
+  if(!el)return;
+  const today=new Date();
+  const upcoming=DB.filter(p=>{
+    if(!p.proxRev)return false;
+    const diff=Math.ceil((new Date(p.proxRev)-today)/(24*3600*1000));
+    return diff<=14;
+  }).sort((a,b)=>new Date(a.proxRev)-new Date(b.proxRev)).slice(0,4);
+  if(!upcoming.length){el.innerHTML='<div class="xs c2" style="padding:6px 0">✓ Sin revisiones próximas pendientes</div>';return;}
+  el.innerHTML=upcoming.map(p=>{
+    const d=new Date(p.proxRev);
+    const diff=Math.ceil((d-today)/(24*3600*1000));
+    const ov=diff<0;
+    const lbl=ov?`Vencida hace ${Math.abs(diff)}d`:`En ${diff}d`;
+    return`<div class="box ${ov?'br':'bw'}" style="padding:7px 10px;margin-bottom:5px;display:flex;align-items:center;gap:8px;cursor:pointer" onclick="vPt('${p.id}')">
+      <div class="pav" style="width:26px;height:26px;font-size:9px;flex-shrink:0;background:${avC(p.nombre)}1a;color:${avC(p.nombre)}">${ini(p.nombre)}</div>
+      <div style="flex:1;min-width:0"><div class="sm f6" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${p.nombre}</div><div class="xs c2">${d.toLocaleDateString('es',{day:'numeric',month:'short'})}</div></div>
+      <span class="tag ${ov?'tr':'to'}" style="flex-shrink:0">${lbl}</span>
+    </div>`;
+  }).join('');
+}
+
+function uBdg(){
+  document.getElementById('bdgP').textContent=DB.length;
+  const ov=DB.filter(p=>p.proxRev&&new Date(p.proxRev)<new Date()).length;
+  const b=document.getElementById('bdgAlert');
+  if(b){b.textContent=ov;b.style.display=ov?'inline':'none';}
+}
+
 function dRec(){
   const el=document.getElementById('dRec');
-  if(!DB.length){el.innerHTML='<div class="empty"><div class="ei">👩‍⚕️</div><div>Sin pacientes aún</div></div>';return;}
-  el.innerHTML=DB.slice(0,5).map(p=>`
-    <div class="pr" onclick="vPt('${p.id}')">
+  if(!DB.length){
+    el.innerHTML='<div class="empty" style="padding:20px"><div class="ei">👩‍⚕️</div><div>Sin pacientes aún</div><button class="btn bp" style="margin-top:10px;font-size:12px" onclick="loadDemo()">🧪 Cargar demo</button></div>';
+    return;
+  }
+  const sorted=[...DB].sort((a,b)=>new Date(b.updatedAt||b.createdAt)-new Date(a.updatedAt||a.createdAt));
+  el.innerHTML=sorted.slice(0,5).map(p=>{
+    const d=new Date(p.updatedAt||p.createdAt);
+    const diff=Math.floor((new Date()-d)/(24*3600*1000));
+    const tStr=diff===0?'Hoy':diff===1?'Ayer':diff<7?`Hace ${diff}d`:d.toLocaleDateString('es',{day:'numeric',month:'short'});
+    return`<div class="pr" onclick="vPt('${p.id}')">
       <div class="pav" style="width:32px;height:32px;font-size:11px;background:${avC(p.nombre)}1a;color:${avC(p.nombre)}">${ini(p.nombre)}</div>
       <div class="pi"><div class="pn sm">${p.nombre}</div><div class="pm">${age(p.fechaNac)} años · ${dxT(p.dx)}</div></div>
-    </div>`).join('');
+      <div class="xs c3" style="flex-shrink:0">${tStr}</div>
+    </div>`;
+  }).join('');
 }
 
 // ═══════════════════════════════════════════════
@@ -1476,8 +1673,6 @@ function expXLSX(){
   if(!cols.length){tst('Selecciona al menos una columna','er');return;}
   const sep=';';
   const header=buildCSVHeader(sep,cols).split(sep);
-  const rows=pts.map(p=>buildCSVRow(p,'\t',cols));
-
   // Build HTML table that Excel can open natively
   let tbl='<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel">';
   tbl+='<head><meta charset="UTF-8"><!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet><x:Name>GinecoApp</x:Name><x:WorksheetOptions><x:DisplayGridlines/></x:WorksheetOptions></x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]--></head><body>';
@@ -1485,10 +1680,23 @@ function expXLSX(){
   header.forEach(h=>{ tbl+=`<th>${h}</th>`; });
   tbl+='</tr></thead><tbody>';
   pts.forEach((p,i)=>{
-    const rawRow=buildCSVRow(p,'\t',cols);
-    const r=rawRow.split('\t');
     tbl+=`<tr style="background:${i%2===0?'#ffffff':'#f8f0f6'}">`;
-    r.forEach(cell=>{ tbl+=`<td>${cell.replace(/^"|"$/g,'').replace(/""/g,'"')}</td>`; });
+    // Build each cell individually to avoid split bugs
+    const cells=[];
+    const a=cols.includes('Datos personales');
+    const b=cols.includes('Síntomas & EVA');
+    const c=cols.includes('Diagnóstico');
+    const d=cols.includes('Tratamiento');
+    const e2=cols.includes('Fertilidad');
+    const f=cols.includes('Laboratorio');
+    const xe=v=>(v==null?'':Array.isArray(v)?v.join(' | '):String(v)).replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    if(a)cells.push(xe(p.nombre),xe(p.nhc),xe(p.fechaNac),xe(p.fechaNac?Math.floor((new Date()-new Date(p.fechaNac))/(365.25*24*3600*1e3)):''),xe(p.estadoCivil),xe(p.paridad),xe(p.imc),xe(p.menarquia),xe(p.anticoncepcion),xe(p.deseoGestacion));
+    if(b)cells.push(xe(p.sintomas),xe(p.evaD||0),xe(p.evaP||0),xe(p.duracion),xe(p.demora));
+    if(c)cells.push(xe(p.dx),xe(p.fechaDx),xe(p.asrm),xe(p.metodoDx),xe(p.locEndo),xe(p.tamEndo),xe(p.adenomiosis),xe(p.figo),xe(p.numMiomas),xe(p.tamMioma),xe(p.distorsion));
+    if(d)cells.push(xe(p.estadoTx),xe(p.txMed),xe(p.txQx),xe(p.respTx),xe(p.proxRev));
+    if(e2)cells.push(xe(p.tiempoInf),xe(p.efi),xe(p.factorMasc),xe(p.permTub),xe(p.tra),xe(p.ciclosFIV));
+    if(f)cells.push(xe(p.hgb),xe(p.amh));
+    cells.forEach(cell=>{ tbl+=`<td>${cell}</td>`; });
     tbl+='</tr>';
   });
   tbl+='</tbody></table></body></html>';
@@ -1497,6 +1705,11 @@ function expXLSX(){
 }
 
 // ── STATS EXPORT ──
+function updExpCount(){
+  const el=document.getElementById('expCount');
+  if(el)el.textContent=DB.length;
+}
+
 function buildStats(){
   const t=DB.length;
   if(!t)return'<div class="empty"><div class="ei">📊</div><div>Sin datos para estadísticas</div></div>';
@@ -1642,7 +1855,7 @@ function doImport(){
 }
 function clearAll(){
   if(!confirm(`¿Borrar TODAS las ${DB.length} pacientes? Esta acción es irreversible.`))return;
-  DB=[];sv();rPL();dRec();tst('Base de datos borrada','er');
+  DB=[];sv();const sec=document.getElementById('s-pacientes');if(sec.classList.contains('on'))rPL();dRec();tst('Base de datos borrada','er');
 }
 
 // ── INIT INFORMES TAB ──
@@ -1655,7 +1868,14 @@ function initInfTab(){
 // ═══════════════════════════════════════════════
 // INIT
 // ═══════════════════════════════════════════════
+// Ensure updExpCount exists before sv() calls it
+if(typeof updExpCount==='undefined'){window.updExpCount=function(){
+  const el=document.getElementById('expCount');
+  if(el)el.textContent=DB.length;
+};}
 uSt();uBdg();cEFI();cBB();uEVA();
+// Initial chart + alerts render
+setTimeout(()=>{buildDonut&&buildDonut(DB.length,...[DB.filter(p=>p.dx==='endometriosis'||p.dx==='ambas').length,DB.filter(p=>p.dx==='miomas'||p.dx==='ambas').length,DB.filter(p=>p.dx==='ambas').length,DB.filter(p=>p.dx==='sospecha').length]);buildReviewAlerts&&buildReviewAlerts();},100);
 </script>
 </body>
 </html>
