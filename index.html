@@ -1135,7 +1135,8 @@ function gD(){
     ciclosFIV:document.getElementById('fCF').value,
     notesFert:document.getElementById('fNF').value,
     createdAt:eId?(DB.find(p=>p.id===eId)||{}).createdAt||new Date().toISOString():new Date().toISOString(),
-    updatedAt:new Date().toISOString()
+    updatedAt:new Date().toISOString(),
+    historial:eId?(DB.find(p=>p.id===eId)||{}).historial||[]:[]
   };
 }
 function fillF(p){
@@ -1166,10 +1167,47 @@ function fillF(p){
 function savePt(){
   const d=gD();
   if(!d.nombre){tst('El nombre es obligatorio','er');return;}
-  if(eId){const i=DB.findIndex(p=>p.id===eId);if(i>=0)DB[i]=d;tst('Paciente actualizada ✓','ok');}
-  else{DB.unshift(d);tst('Paciente registrada ✓','ok');}
+  if(eId){
+    const prev=DB.find(p=>p.id===eId)||{};
+    // Preservar historial existente y añadir nuevo snapshot si hay cambio relevante
+    d.historial=prev.historial||[];
+    if(hasClinicChange(prev,d)){
+      d.historial=[mkSnap(d),...d.historial].slice(0,50);
+    }
+    const i=DB.findIndex(p=>p.id===eId);
+    if(i>=0)DB[i]=d;
+    tst('Paciente actualizada ✓','ok');
+  } else {
+    // Nueva paciente: historial vacío, se añade snapshot inicial
+    d.historial=[mkSnap(d)];
+    DB.unshift(d);
+    tst('Paciente registrada ✓','ok');
+  }
   sv();eId=null;
   go('pacientes',document.querySelectorAll('.nb')[1]);
+}
+
+// Crea un snapshot clínico de los campos que evolucionan
+function mkSnap(p){
+  return{
+    id:'s_'+Date.now()+'_'+Math.random().toString(36).slice(2,5),
+    fecha:new Date().toISOString(),
+    evaD:p.evaD, evaP:p.evaP,
+    hgb:p.hgb, amh:p.amh,
+    tamEndo:p.tamEndo, tamMioma:p.tamMioma, volUt:p.volUt,
+    txMed:[...(p.txMed||[])], txQx:[...(p.txQx||[])],
+    respTx:p.respTx, estadoTx:p.estadoTx,
+    efi:p.efi, proxRev:p.proxRev,
+    nota:p.planTx||''
+  };
+}
+
+// Detecta cambio clínico relevante entre dos versiones
+function hasClinicChange(prev,next){
+  const fields=['evaD','evaP','hgb','amh','tamEndo','tamMioma','volUt','respTx','estadoTx','efi'];
+  if(fields.some(f=>String(prev[f]||'')!==String(next[f]||'')))return true;
+  const arrDiff=(a,b)=>JSON.stringify([...(a||[])].sort())!==JSON.stringify([...(b||[])].sort());
+  return arrDiff(prev.txMed,next.txMed)||arrDiff(prev.txQx,next.txQx);
 }
 function ePt(){const p=DB.find(p=>p.id===cId);if(!p)return;fillF(p);cM();go('nueva',document.querySelectorAll('.nb')[2]);}
 function dPt(){
@@ -1291,9 +1329,129 @@ function bCard(p){
     </div>`:''}
   ${p.planTx?`<div class="box bi2 mb3"><div class="bt">📋 Plan terapéutico</div><div class="sm">${p.planTx}</div></div>`:''}
   ${revAlert}
+  ${(p.historial&&p.historial.length>1)?buildHistorialHTML(p):''}
   <div id="ctxPanel" style="margin-top:14px"></div>
   <div class="xs c3" style="margin-top:12px;padding-top:8px;border-top:1px solid var(--border)">📅 Registrado: ${created}${updated}</div>`;
 }
+// ═══════════════════════════════════════════════
+// HISTORIAL LONGITUDINAL
+// ═══════════════════════════════════════════════
+function buildHistorialHTML(p){
+  const hist=[...(p.historial||[])].sort((a,b)=>new Date(b.fecha)-new Date(a.fecha));
+  if(hist.length<2)return'';
+
+  // Sparkline de EVA dismenorrea (últimas 8 entradas, orden cronológico)
+  const sparkEVA=buildSparkline(
+    [...hist].reverse().slice(-8).map(s=>({v:parseFloat(s.evaD)||0,d:s.fecha})),
+    10,'var(--pk)'
+  );
+  // Sparkline de Hgb si hay datos
+  const hgbPts=[...hist].reverse().slice(-8).filter(s=>parseFloat(s.hgb)>0);
+  const sparkHgb=hgbPts.length>=2?buildSparkline(
+    hgbPts.map(s=>({v:parseFloat(s.hgb),d:s.fecha})),
+    16,'var(--gr)',8
+  ):'';
+
+  // Detectar tendencia EVA
+  const evaVals=hist.slice(0,5).map(s=>parseFloat(s.evaD)||0).filter(v=>!isNaN(v));
+  let tendencia='';
+  if(evaVals.length>=2){
+    const diff=evaVals[0]-evaVals[evaVals.length-1];
+    if(diff<=-2) tendencia='<span class="tag tr" style="font-size:10px">↑ EVA empeora</span>';
+    else if(diff>=2) tendencia='<span class="tag tg" style="font-size:10px">↓ EVA mejora</span>';
+    else tendencia='<span class="tag tgr" style="font-size:10px">→ EVA estable</span>';
+  }
+
+  // Timeline de entradas (máx 6 visibles, el resto colapsado)
+  const visible=hist.slice(0,4);
+  const ocultos=hist.slice(4);
+
+  const txIcon={consulta:'🩺',cirugia:'🔪',analitica:'🧪',inicio_tx:'💊'};
+  const entryHTML=s=>{
+    const d=new Date(s.fecha);
+    const dStr=d.toLocaleDateString('es',{day:'numeric',month:'short',year:'2-digit'});
+    const cambios=[];
+    if(s.evaD) cambios.push(`EVA dis: <strong>${s.evaD}</strong>`);
+    if(s.evaP) cambios.push(`EVA pel: <strong>${s.evaP}</strong>`);
+    if(s.hgb)  cambios.push(`Hgb: <strong>${s.hgb}</strong>`);
+    if(s.amh)  cambios.push(`AMH: <strong>${s.amh}</strong>`);
+    if(s.tamEndo) cambios.push(`Endometrioma: <strong>${s.tamEndo}mm</strong>`);
+    if(s.tamMioma) cambios.push(`Mioma: <strong>${s.tamMioma}mm</strong>`);
+    if(s.volUt) cambios.push(`Vol.ut: <strong>${s.volUt}cc</strong>`);
+    if(s.efi)  cambios.push(`EFI: <strong>${s.efi}</strong>`);
+    const txStr=(s.txMed&&s.txMed.length)?s.txMed.slice(0,2).join(', ')+(s.txMed.length>2?'…':''):'';
+    const qxStr=(s.txQx&&s.txQx.length)?'🔪 '+s.txQx[0]+(s.txQx.length>1?'…':''):'';
+    return`<div style="display:flex;gap:10px;padding:7px 0;border-bottom:1px solid var(--border)">
+      <div style="flex-shrink:0;display:flex;flex-direction:column;align-items:center;gap:2px">
+        <div style="width:8px;height:8px;border-radius:50%;background:var(--pk);flex-shrink:0;margin-top:4px"></div>
+        <div style="width:1px;flex:1;background:var(--border2)"></div>
+      </div>
+      <div style="flex:1;min-width:0;padding-bottom:4px">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:6px;flex-wrap:wrap">
+          <div class="xs f6" style="color:var(--text)">${dStr}</div>
+          ${s.respTx?`<span class="tag tgr" style="font-size:10px">${s.respTx.split('(')[0].trim()}</span>`:''}
+        </div>
+        ${cambios.length?`<div class="xs c2" style="margin-top:3px;line-height:1.6">${cambios.join(' · ')}</div>`:''}
+        ${txStr?`<div class="xs" style="margin-top:2px;color:var(--pu)">💊 ${txStr}</div>`:''}
+        ${qxStr?`<div class="xs" style="margin-top:2px;color:var(--or)">${qxStr}</div>`:''}
+        ${s.nota?`<div class="xs c3" style="margin-top:3px;font-style:italic;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:240px">${s.nota}</div>`:''}
+      </div>
+    </div>`;
+  };
+
+  const ocultosHTML=ocultos.length?`
+    <div id="histMore_${p.id}" style="display:none">
+      ${ocultos.map(entryHTML).join('')}
+    </div>
+    <button class="btn bg bsm" style="font-size:11px;margin-top:4px;width:100%;justify-content:center"
+      onclick="const el=document.getElementById('histMore_${p.id}');const open=el.style.display!=='none';el.style.display=open?'none':'block';this.textContent=open?'Ver ${ocultos.length} entradas anteriores ▾':'Ocultar anteriores ▴'">
+      Ver ${ocultos.length} entradas anteriores ▾
+    </button>`:'';
+
+  return`
+  <div style="border:1px solid var(--border2);border-radius:var(--r2);overflow:hidden;margin-top:14px">
+    <div style="background:rgba(196,98,164,.08);padding:8px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px">
+      <div style="display:flex;align-items:center;gap:8px">
+        <div style="font-size:11.5px;font-weight:700;color:var(--pk)">📈 HISTORIAL</div>
+        <div class="xs c3">${hist.length} entrada${hist.length!==1?'s':''}</div>
+        ${tendencia}
+      </div>
+      <div style="display:flex;gap:12px;align-items:center">
+        ${sparkEVA?`<div style="display:flex;flex-direction:column;align-items:center;gap:1px">
+          ${sparkEVA}<div class="xs c3" style="font-size:9px">EVA</div></div>`:''}
+        ${sparkHgb?`<div style="display:flex;flex-direction:column;align-items:center;gap:1px">
+          ${sparkHgb}<div class="xs c3" style="font-size:9px">Hgb</div></div>`:''}
+      </div>
+    </div>
+    <div style="padding:8px 12px">
+      ${visible.map(entryHTML).join('')}
+      ${ocultosHTML}
+    </div>
+  </div>`;
+}
+
+// Sparkline SVG inline (w=80, h=24 por defecto)
+function buildSparkline(pts,maxVal,color,minVal=0){
+  if(pts.length<2)return'';
+  const W=80,H=24,pad=2;
+  const range=maxVal-minVal||1;
+  const xs=pts.map((_,i)=>pad+(i/(pts.length-1))*(W-2*pad));
+  const ys=pts.map(p=>H-pad-((p.v-minVal)/range)*(H-2*pad));
+  const path='M'+xs.map((x,i)=>`${x.toFixed(1)},${ys[i].toFixed(1)}`).join('L');
+  const last=pts[pts.length-1];
+  const area='M'+xs[0]+','+H+'L'+xs.map((x,i)=>`${x.toFixed(1)},${ys[i].toFixed(1)}`).join('L')+'L'+xs[xs.length-1]+','+H+'Z';
+  return`<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" style="overflow:visible">
+    <defs><linearGradient id="sg${color.replace(/[^a-z]/g,'')}" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="${color}" stop-opacity=".18"/>
+      <stop offset="100%" stop-color="${color}" stop-opacity="0"/>
+    </linearGradient></defs>
+    <path d="${area}" fill="url(#sg${color.replace(/[^a-z]/g,'')})" />
+    <path d="${path}" fill="none" stroke="${color}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="${xs[xs.length-1].toFixed(1)}" cy="${ys[ys.length-1].toFixed(1)}" r="2.5" fill="${color}"/>
+    <text x="${xs[xs.length-1]>W/2?xs[xs.length-1]-4:xs[xs.length-1]+4}" y="${Math.max(ys[ys.length-1]-3,8)}" fill="${color}" font-size="8" text-anchor="${xs[xs.length-1]>W/2?'end':'start'}" font-weight="600">${last.v}</text>
+  </svg>`;
+}
+
 // ═══════════════════════════════════════════════
 // DECISOR CLÍNICO CONTEXTUAL
 // ═══════════════════════════════════════════════
@@ -1697,6 +1855,29 @@ function bRpt(p,type){
       <br><p>Se solicita valoración según guías ESHRE 2022 / SEGO 2025.</p>
     </div></div>`;
   }
+  // Historial en informe completo
+  if(type==='clinico'&&p.historial&&p.historial.length>1){
+    const hist=[...p.historial].sort((a,b)=>new Date(b.fecha)-new Date(a.fecha));
+    const rh=(k,v)=>v?`<div class="rr"><span class="rk">${k}</span><span class="rv">${v}</span></div>`:'';
+    body+=`<div class="rs"><h3>${type==='clinico'?'6':''} Historial de Seguimiento</h3>`;
+    hist.forEach((s,i)=>{
+      const d=new Date(s.fecha).toLocaleDateString('es',{day:'numeric',month:'long',year:'numeric'});
+      body+=`<div style="margin-bottom:10px;padding:8px;background:var(--bg3);border-radius:6px;border-left:3px solid var(--pk)">`;
+      body+=`<div class="xs f6" style="color:var(--pk);margin-bottom:4px">Visita ${hist.length-i} · ${d}</div>`;
+      body+=rh('EVA dismenorrea',s.evaD?s.evaD+'/10':'');
+      body+=rh('EVA dolor pélvico',s.evaP?s.evaP+'/10':'');
+      body+=rh('Hemoglobina',s.hgb?s.hgb+' g/dL':'');
+      body+=rh('AMH',s.amh?s.amh+' ng/mL':'');
+      body+=rh('Endometrioma',s.tamEndo?s.tamEndo+' mm':'');
+      body+=rh('Mioma mayor',s.tamMioma?s.tamMioma+' mm':'');
+      body+=rh('Tratamiento médico',(s.txMed||[]).join(', '));
+      body+=rh('Cirugías',(s.txQx||[]).join(', '));
+      body+=rh('Respuesta',s.respTx);
+      if(s.nota) body+=`<div style="margin-top:5px;font-size:12px;color:var(--text2);font-style:italic">${s.nota}</div>`;
+      body+='</div>';
+    });
+    body+='</div>';
+  }
   return hdr+body+`<div class="xs c3 mt3" style="border-top:1px solid var(--border);padding-top:8px">GinecoApp Pro v2.1 · ESHRE 2022 · SEGO 2025 · Documento no válido sin firma del médico responsable.</div>`;
 }
 
@@ -1716,11 +1897,11 @@ function tst(msg,type='in'){
 // DEMO DATA  (se carga solo si la BD está vacía)
 // ═══════════════════════════════════════════════
 const DEMO=[
-  {id:'demo_1',nombre:'García Martínez, Carmen',nhc:'2024-001',fechaNac:'1988-03-15',estadoCivil:'Casada',telefono:'+34 612 345 678',imc:'23.4',menarquia:'12',paridad:'G1 P1 A0',anticoncepcion:'ACO combinados',deseoGestacion:'no',antFam:['Endometriosis familiar'],sintomas:['Dismenorrea','Dispareunia profunda','Disquecia','Fatiga crónica'],evaD:'8',evaP:'6',duracion:'3–5 años',demora:'3–7 años',obsSint:'Dismenorrea incapacitante desde menarquia. Mejora parcial con ACO.',dx:'endometriosis',fechaDx:'2022-06-10',asrm:'III',metodoDx:'Laparoscopía + histología',locEndo:['Endometrioma ovárico','Ligamentos uterosacros','Endometriosis profunda'],tamEndo:'28',adenomiosis:'Focal',figo:'',numMiomas:'1',tamMioma:'',volUt:'',distorsion:'No',sintMioma:[],hgb:'11.8',amh:'1.9',notesDx:'Endometrioma derecho 28mm. Endometriosis profunda USL bilateral confirmada por RM.',estadoTx:'medico',txMed:['DIU-LNG','AINEs'],txQx:['Laparoscopía diagnóstica','Escisión endometriosis'],respTx:'Buena (EVA 3–4)',proxRev:'2025-09-15',planTx:'Mantener DIU-LNG 24 meses. Reevaluar AMH en 6 meses. Si recurrencia dolor: considerar GnRH antagonista.',tiempoInf:'',efi:'',factorMasc:'',permTub:'',tra:'ninguna',ciclosFIV:'0',notesFert:'',createdAt:'2024-01-10T10:00:00.000Z',updatedAt:'2024-06-15T09:30:00.000Z'},
-  {id:'demo_2',nombre:'López Fernández, Ana',nhc:'2024-002',fechaNac:'1992-07-22',estadoCivil:'Pareja estable',telefono:'+34 623 456 789',imc:'24.1',menarquia:'13',paridad:'G0 P0 A0',anticoncepcion:'Ninguna',deseoGestacion:'si',antFam:[],sintomas:['Dismenorrea','Infertilidad','Dolor pélvico crónico'],evaD:'7',evaP:'5',duracion:'1–3 años',demora:'1–3 años',obsSint:'Infertilidad primaria 18 meses. Ciclos regulares 28 días.',dx:'endometriosis',fechaDx:'2023-11-20',asrm:'II',metodoDx:'Ecografía TV',locEndo:['Peritoneal superficial','Endometrioma ovárico'],tamEndo:'18',adenomiosis:'No',figo:'',numMiomas:'1',tamMioma:'',volUt:'',distorsion:'No',sintMioma:[],hgb:'12.4',amh:'2.1',notesDx:'Endometrioma izquierdo 18mm. Ecografía TV con signos de endometriosis peritoneal.',estadoTx:'mixto',txMed:['ACO combinados'],txQx:['Quistectomía ovárica'],respTx:'Parcial (EVA 5–6)',proxRev:'2025-08-20',planTx:'Post-quistectomía. Calcular EFI intraoperatorio. Si EFI≥7: intento natural 6 meses. Si EFI<7: FIV directa.',tiempoInf:'18',efi:'6',factorMasc:'Normal',permTub:'Bilateral permeable',tra:'ninguna',ciclosFIV:'0',notesFert:'AMH 2.1. Pareja con seminograma normal. Pendiente laparoscopía diagnóstica-terapéutica.',createdAt:'2024-02-05T11:00:00.000Z',updatedAt:'2024-07-01T08:00:00.000Z'},
-  {id:'demo_3',nombre:'Rodríguez Sánchez, Elena',nhc:'2024-003',fechaNac:'1985-11-08',estadoCivil:'Casada',telefono:'+34 634 567 890',imc:'27.2',menarquia:'11',paridad:'G2 P2 A0',anticoncepcion:'Ninguna',deseoGestacion:'no',antFam:['Miomas'],sintomas:['Sangrado uterino abundante','Compresión vesical','Anemia','Dolor pélvico'],evaD:'4',evaP:'5',duracion:'1–3 años',demora:'<1 año',obsSint:'SUA con anemia ferropénica. Hgb 9.2 g/dL. Urgencia urinaria frecuente.',dx:'miomas',fechaDx:'2024-01-08',asrm:'',metodoDx:'',locEndo:[],tamEndo:'',adenomiosis:'Sospecha',figo:'4',numMiomas:'3',tamMioma:'62',volUt:'380',distorsion:'No',sintMioma:['SUA (sangrado abundante)','Compresión vesical','Anemia'],hgb:'9.2',amh:'3.4',notesDx:'3 miomas: FIGO 4 (62mm), FIGO 4 (38mm), FIGO 6 (25mm). Volumen uterino 380cc.',estadoTx:'medico',txMed:['Relugolix (antagonista)','Vitamina D','Ácido tranexámico'],txQx:[],respTx:'Buena (EVA 3–4)',proxRev:'2025-07-30',planTx:'Relugolix 40mg + TAB integrada. Objetivo: recuperar Hgb >12 g/dL en 3 meses, reducir volumen miomático antes de miomectomía laparoscópica.',tiempoInf:'',efi:'',factorMasc:'',permTub:'',tra:'ninguna',ciclosFIV:'0',notesFert:'',createdAt:'2024-01-20T09:00:00.000Z',updatedAt:'2024-05-10T14:00:00.000Z'},
-  {id:'demo_4',nombre:'Martínez Ruiz, Sofia',nhc:'2024-004',fechaNac:'1990-04-30',estadoCivil:'Soltera',telefono:'+34 645 678 901',imc:'21.8',menarquia:'12',paridad:'G0 P0 A0',anticoncepcion:'Implante etonogestrel',deseoGestacion:'futuro',antFam:['Endometriosis familiar','Miomas'],sintomas:['Dismenorrea','Dispareunia profunda','Disquecia','Sangrado uterino abundante','Infertilidad'],evaD:'9',evaP:'7',duracion:'> 5 años',demora:'> 7 años',obsSint:'Diagnóstico tardío después de 8 años de síntomas. Múltiples consultas previas sin diagnóstico.',dx:'ambas',fechaDx:'2023-09-15',asrm:'IV',metodoDx:'RM pélvica',locEndo:['Endometrioma ovárico','Endometriosis profunda','Tabique rectovaginal','Ligamentos uterosacros','Intestinal'],tamEndo:'45',adenomiosis:'Difusa',figo:'2',numMiomas:'2',tamMioma:'35',volUt:'220',distorsion:'Sí',sintMioma:['SUA (sangrado abundante)','Dolor pélvico'],hgb:'10.1',amh:'1.2',notesDx:'Endometriosis estadio IV con endometrioma bilateral (45mm y 22mm). Mioma submucoso tipo 2 (35mm) con distorsión cavitaria. Adenomiosis difusa. Indicación de centro de excelencia.',estadoTx:'medico',txMed:['Agonistas GnRH','Dienogest','AINEs'],txQx:['Laparoscopía diagnóstica'],respTx:'Parcial (EVA 5–6)',proxRev:'2025-08-05',planTx:'Derivación a centro de excelencia endometriosis. Miomectomía histeroscópica tipo 2 previa. Preservación fertilidad (criopreservación ovocitaria) antes de nueva cirugía. EFI intraoperatorio.',tiempoInf:'24',efi:'4',factorMasc:'No estudiado',permTub:'No estudiada',tra:'pres',ciclosFIV:'0',notesFert:'AMH 1.2 ng/mL. Reserva ovárica comprometida. Urgente preservación fertilidad antes de nueva cirugía.',createdAt:'2024-03-01T10:00:00.000Z',updatedAt:'2024-06-20T11:00:00.000Z'},
-  {id:'demo_5',nombre:'Jiménez Torres, Lucía',nhc:'2024-005',fechaNac:'1995-09-12',estadoCivil:'Soltera',telefono:'+34 656 789 012',imc:'22.0',menarquia:'14',paridad:'G0 P0 A0',anticoncepcion:'Progestágenos (oral)',deseoGestacion:'futuro',antFam:[],sintomas:['Dismenorrea','Disuria','Hematuria cíclica'],evaD:'6',evaP:'3',duracion:'6–12 meses',demora:'<1 año',obsSint:'Dismenorrea severa con hematuria cíclica. Ecografía TV normal. RM pendiente.',dx:'sospecha',fechaDx:'2024-05-01',asrm:'',metodoDx:'Diagnóstico empírico',locEndo:[],tamEndo:'',adenomiosis:'',figo:'',numMiomas:'1',tamMioma:'',volUt:'',distorsion:'No',sintMioma:[],hgb:'13.1',amh:'3.8',notesDx:'Imagen negativa. Tratamiento empírico iniciado con progestágenos. Hematuria cíclica sugiere endometriosis vesical. RM pélvica solicitada.',estadoTx:'medico',txMed:['Progestágenos (oral)','AINEs'],txQx:[],respTx:'Parcial (EVA 5–6)',proxRev:'2025-07-15',planTx:'Esperar resultado RM. Si imagen negativa y empírico ineficaz: laparoscopía diagnóstica. Urología para descartar endometriosis vesical.',tiempoInf:'',efi:'',factorMasc:'',permTub:'',tra:'ninguna',ciclosFIV:'0',notesFert:'',createdAt:'2024-05-10T10:00:00.000Z',updatedAt:'2024-05-10T10:00:00.000Z'}
+  {id:'demo_1',nombre:'García Martínez, Carmen',nhc:'2024-001',fechaNac:'1988-03-15',estadoCivil:'Casada',telefono:'+34 612 345 678',imc:'23.4',menarquia:'12',paridad:'G1 P1 A0',anticoncepcion:'ACO combinados',deseoGestacion:'no',antFam:['Endometriosis familiar'],sintomas:['Dismenorrea','Dispareunia profunda','Disquecia','Fatiga crónica'],evaD:'8',evaP:'6',duracion:'3–5 años',demora:'3–7 años',obsSint:'Dismenorrea incapacitante desde menarquia. Mejora parcial con ACO.',dx:'endometriosis',fechaDx:'2022-06-10',asrm:'III',metodoDx:'Laparoscopía + histología',locEndo:['Endometrioma ovárico','Ligamentos uterosacros','Endometriosis profunda'],tamEndo:'28',adenomiosis:'Focal',figo:'',numMiomas:'1',tamMioma:'',volUt:'',distorsion:'No',sintMioma:[],hgb:'11.8',amh:'1.9',notesDx:'Endometrioma derecho 28mm. Endometriosis profunda USL bilateral confirmada por RM.',estadoTx:'medico',txMed:['DIU-LNG','AINEs'],txQx:['Laparoscopía diagnóstica','Escisión endometriosis'],respTx:'Buena (EVA 3–4)',proxRev:'2025-09-15',planTx:'Mantener DIU-LNG 24 meses. Reevaluar AMH en 6 meses. Si recurrencia dolor: considerar GnRH antagonista.',tiempoInf:'',efi:'',factorMasc:'',permTub:'',tra:'ninguna',ciclosFIV:'0',notesFert:'',createdAt:'2024-01-10T10:00:00.000Z',updatedAt:'2024-06-15T09:30:00.000Z',historial:[{id:'s1a',fecha:'2024-06-15T09:30:00.000Z',evaD:'4',evaP:'3',hgb:'12.1',amh:'1.8',tamEndo:'18',tamMioma:'',volUt:'',txMed:['DIU-LNG','AINEs'],txQx:[],respTx:'Buena (EVA 3–4)',estadoTx:'medico',efi:'',proxRev:'2025-09-15',nota:'Endometrioma reducido a 18mm. Buena tolerancia DIU-LNG. Adenomiosis estable.'},{id:'s1b',fecha:'2024-03-20T10:00:00.000Z',evaD:'6',evaP:'5',hgb:'11.5',amh:'1.9',tamEndo:'24',tamMioma:'',volUt:'',txMed:['DIU-LNG','AINEs'],txQx:[],respTx:'Parcial (EVA 5–6)',estadoTx:'medico',efi:'',proxRev:'2024-06-15',nota:'3 meses post-cirugía. DIU-LNG recién colocado. Dolor mejorando.'},{id:'s1c',fecha:'2024-01-10T10:00:00.000Z',evaD:'8',evaP:'6',hgb:'11.8',amh:'1.9',tamEndo:'28',tamMioma:'',volUt:'',txMed:['AINEs'],txQx:['Laparoscopía diagnóstica','Escisión endometriosis'],respTx:'Escasa (EVA 7–8)',estadoTx:'quirurgico',efi:'',proxRev:'2024-03-20',nota:'Diagnóstico: Endometriosis III. Endometrioma 28mm. Cirugía laparoscópica realizada.'}]},
+  {id:'demo_2',nombre:'López Fernández, Ana',nhc:'2024-002',fechaNac:'1992-07-22',estadoCivil:'Pareja estable',telefono:'+34 623 456 789',imc:'24.1',menarquia:'13',paridad:'G0 P0 A0',anticoncepcion:'Ninguna',deseoGestacion:'si',antFam:[],sintomas:['Dismenorrea','Infertilidad','Dolor pélvico crónico'],evaD:'7',evaP:'5',duracion:'1–3 años',demora:'1–3 años',obsSint:'Infertilidad primaria 18 meses. Ciclos regulares 28 días.',dx:'endometriosis',fechaDx:'2023-11-20',asrm:'II',metodoDx:'Ecografía TV',locEndo:['Peritoneal superficial','Endometrioma ovárico'],tamEndo:'18',adenomiosis:'No',figo:'',numMiomas:'1',tamMioma:'',volUt:'',distorsion:'No',sintMioma:[],hgb:'12.4',amh:'2.1',notesDx:'Endometrioma izquierdo 18mm. Ecografía TV con signos de endometriosis peritoneal.',estadoTx:'mixto',txMed:['ACO combinados'],txQx:['Quistectomía ovárica'],respTx:'Parcial (EVA 5–6)',proxRev:'2025-08-20',planTx:'Post-quistectomía. Calcular EFI intraoperatorio. Si EFI≥7: intento natural 6 meses. Si EFI<7: FIV directa.',tiempoInf:'18',efi:'6',factorMasc:'Normal',permTub:'Bilateral permeable',tra:'ninguna',ciclosFIV:'0',notesFert:'AMH 2.1. Pareja con seminograma normal. Pendiente laparoscopía diagnóstica-terapéutica.',createdAt:'2024-02-05T11:00:00.000Z',updatedAt:'2024-07-01T08:00:00.000Z',historial:[{id:'s2a',fecha:'2024-07-01T08:00:00.000Z',evaD:'5',evaP:'4',hgb:'12.4',amh:'2.0',tamEndo:'12',tamMioma:'',volUt:'',txMed:[],txQx:['Quistectomía ovárica'],respTx:'Parcial (EVA 5–6)',estadoTx:'mixto',efi:'6',proxRev:'2025-08-20',nota:'Post-quistectomía. EFI calculado=6. Pendiente decisión FIV vs intento natural.'},{id:'s2b',fecha:'2024-04-15T10:00:00.000Z',evaD:'7',evaP:'5',hgb:'12.2',amh:'2.1',tamEndo:'18',tamMioma:'',volUt:'',txMed:['ACO combinados'],txQx:[],respTx:'Parcial (EVA 5–6)',estadoTx:'medico',efi:'',proxRev:'2024-07-01',nota:'Endometrioma 18mm. Se mantiene ACO pre-cirugía. Infertilidad 14 meses.'},{id:'s2c',fecha:'2024-02-05T11:00:00.000Z',evaD:'7',evaP:'5',hgb:'12.5',amh:'2.1',tamEndo:'18',tamMioma:'',volUt:'',txMed:[],txQx:[],respTx:'',estadoTx:'ninguno',efi:'',proxRev:'2024-04-15',nota:'Primera consulta. Eco TV: endometrioma izquierdo 18mm. Infertilidad primaria 12 meses.'}]},
+  {id:'demo_3',nombre:'Rodríguez Sánchez, Elena',nhc:'2024-003',fechaNac:'1985-11-08',estadoCivil:'Casada',telefono:'+34 634 567 890',imc:'27.2',menarquia:'11',paridad:'G2 P2 A0',anticoncepcion:'Ninguna',deseoGestacion:'no',antFam:['Miomas'],sintomas:['Sangrado uterino abundante','Compresión vesical','Anemia','Dolor pélvico'],evaD:'4',evaP:'5',duracion:'1–3 años',demora:'<1 año',obsSint:'SUA con anemia ferropénica. Hgb 9.2 g/dL. Urgencia urinaria frecuente.',dx:'miomas',fechaDx:'2024-01-08',asrm:'',metodoDx:'',locEndo:[],tamEndo:'',adenomiosis:'Sospecha',figo:'4',numMiomas:'3',tamMioma:'62',volUt:'380',distorsion:'No',sintMioma:['SUA (sangrado abundante)','Compresión vesical','Anemia'],hgb:'9.2',amh:'3.4',notesDx:'3 miomas: FIGO 4 (62mm), FIGO 4 (38mm), FIGO 6 (25mm). Volumen uterino 380cc.',estadoTx:'medico',txMed:['Relugolix (antagonista)','Vitamina D','Ácido tranexámico'],txQx:[],respTx:'Buena (EVA 3–4)',proxRev:'2025-07-30',planTx:'Relugolix 40mg + TAB integrada. Objetivo: recuperar Hgb >12 g/dL en 3 meses, reducir volumen miomático antes de miomectomía laparoscópica.',tiempoInf:'',efi:'',factorMasc:'',permTub:'',tra:'ninguna',ciclosFIV:'0',notesFert:'',createdAt:'2024-01-20T09:00:00.000Z',updatedAt:'2024-05-10T14:00:00.000Z',historial:[{id:'s3a',fecha:'2024-05-10T14:00:00.000Z',evaD:'3',evaP:'3',hgb:'11.4',amh:'3.4',tamEndo:'',tamMioma:'55',volUt:'330',txMed:['Relugolix (antagonista)','Vitamina D'],txQx:[],respTx:'Buena (EVA 3–4)',estadoTx:'medico',efi:'',proxRev:'2025-07-30',nota:'Hgb subiendo: 9.2→10.6→11.4. Mioma mayor 55mm (-7mm). Sangrado casi ausente.'},{id:'s3b',fecha:'2024-03-12T09:00:00.000Z',evaD:'3',evaP:'3',hgb:'10.6',amh:'3.4',tamEndo:'',tamMioma:'60',volUt:'360',txMed:['Relugolix (antagonista)','Vitamina D','Ácido tranexámico'],txQx:[],respTx:'Buena (EVA 3–4)',estadoTx:'medico',efi:'',proxRev:'2024-05-10',nota:'2 meses Relugolix. Hgb 10.6. Sangrado reducido 80%. Bien tolerado.'},{id:'s3c',fecha:'2024-01-20T09:00:00.000Z',evaD:'4',evaP:'5',hgb:'9.2',amh:'3.4',tamEndo:'',tamMioma:'62',volUt:'380',txMed:['Ácido tranexámico'],txQx:[],respTx:'Escasa (EVA 7–8)',estadoTx:'ninguno',efi:'',proxRev:'2024-03-12',nota:'Diagnóstico: 3 miomas FIGO 4. Hgb 9.2 g/dL (anemia moderada-severa). Inicio Relugolix.'}]},
+  {id:'demo_4',nombre:'Martínez Ruiz, Sofia',nhc:'2024-004',fechaNac:'1990-04-30',estadoCivil:'Soltera',telefono:'+34 645 678 901',imc:'21.8',menarquia:'12',paridad:'G0 P0 A0',anticoncepcion:'Implante etonogestrel',deseoGestacion:'futuro',antFam:['Endometriosis familiar','Miomas'],sintomas:['Dismenorrea','Dispareunia profunda','Disquecia','Sangrado uterino abundante','Infertilidad'],evaD:'9',evaP:'7',duracion:'> 5 años',demora:'> 7 años',obsSint:'Diagnóstico tardío después de 8 años de síntomas. Múltiples consultas previas sin diagnóstico.',dx:'ambas',fechaDx:'2023-09-15',asrm:'IV',metodoDx:'RM pélvica',locEndo:['Endometrioma ovárico','Endometriosis profunda','Tabique rectovaginal','Ligamentos uterosacros','Intestinal'],tamEndo:'45',adenomiosis:'Difusa',figo:'2',numMiomas:'2',tamMioma:'35',volUt:'220',distorsion:'Sí',sintMioma:['SUA (sangrado abundante)','Dolor pélvico'],hgb:'10.1',amh:'1.2',notesDx:'Endometriosis estadio IV con endometrioma bilateral (45mm y 22mm). Mioma submucoso tipo 2 (35mm) con distorsión cavitaria. Adenomiosis difusa. Indicación de centro de excelencia.',estadoTx:'medico',txMed:['Agonistas GnRH','Dienogest','AINEs'],txQx:['Laparoscopía diagnóstica'],respTx:'Parcial (EVA 5–6)',proxRev:'2025-08-05',planTx:'Derivación a centro de excelencia endometriosis. Miomectomía histeroscópica tipo 2 previa. Preservación fertilidad (criopreservación ovocitaria) antes de nueva cirugía. EFI intraoperatorio.',tiempoInf:'24',efi:'4',factorMasc:'No estudiado',permTub:'No estudiada',tra:'pres',ciclosFIV:'0',notesFert:'AMH 1.2 ng/mL. Reserva ovárica comprometida. Urgente preservación fertilidad antes de nueva cirugía.',createdAt:'2024-03-01T10:00:00.000Z',updatedAt:'2024-06-20T11:00:00.000Z',historial:[{id:'s4a',fecha:'2024-06-20T11:00:00.000Z',evaD:'7',evaP:'6',hgb:'10.8',amh:'1.1',tamEndo:'38',tamMioma:'35',volUt:'210',txMed:['Agonistas GnRH','Dienogest'],txQx:['Laparoscopía diagnóstica'],respTx:'Parcial (EVA 5–6)',estadoTx:'medico',efi:'4',proxRev:'2025-08-05',nota:'GnRH 3 meses. Endometriomas reducidos. Pendiente miomectomía histeroscópica y criopreservación ovocitaria.'},{id:'s4b',fecha:'2024-04-10T10:00:00.000Z',evaD:'8',evaP:'7',hgb:'10.3',amh:'1.2',tamEndo:'43',tamMioma:'35',volUt:'218',txMed:['Agonistas GnRH','AINEs'],txQx:['Laparoscopía diagnóstica'],respTx:'Escasa (EVA 7–8)',estadoTx:'medico',efi:'',proxRev:'2024-06-20',nota:'Post-laparoscopía diagnóstica. Inicio agonistas GnRH. Derivación centro excelencia.'},{id:'s4c',fecha:'2024-03-01T10:00:00.000Z',evaD:'9',evaP:'7',hgb:'10.1',amh:'1.2',tamEndo:'45',tamMioma:'35',volUt:'220',txMed:['Dienogest','AINEs'],txQx:[],respTx:'Refractaria (EVA 9–10)',estadoTx:'medico',efi:'',proxRev:'2024-04-10',nota:'Primera consulta. Endo IV. Endometrioma bilateral 45/22mm. Mioma submucoso T2. Demora diagnóstica 8 años.'}]},
+  {id:'demo_5',nombre:'Jiménez Torres, Lucía',nhc:'2024-005',fechaNac:'1995-09-12',estadoCivil:'Soltera',telefono:'+34 656 789 012',imc:'22.0',menarquia:'14',paridad:'G0 P0 A0',anticoncepcion:'Progestágenos (oral)',deseoGestacion:'futuro',antFam:[],sintomas:['Dismenorrea','Disuria','Hematuria cíclica'],evaD:'6',evaP:'3',duracion:'6–12 meses',demora:'<1 año',obsSint:'Dismenorrea severa con hematuria cíclica. Ecografía TV normal. RM pendiente.',dx:'sospecha',fechaDx:'2024-05-01',asrm:'',metodoDx:'Diagnóstico empírico',locEndo:[],tamEndo:'',adenomiosis:'',figo:'',numMiomas:'1',tamMioma:'',volUt:'',distorsion:'No',sintMioma:[],hgb:'13.1',amh:'3.8',notesDx:'Imagen negativa. Tratamiento empírico iniciado con progestágenos. Hematuria cíclica sugiere endometriosis vesical. RM pélvica solicitada.',estadoTx:'medico',txMed:['Progestágenos (oral)','AINEs'],txQx:[],respTx:'Parcial (EVA 5–6)',proxRev:'2025-07-15',planTx:'Esperar resultado RM. Si imagen negativa y empírico ineficaz: laparoscopía diagnóstica. Urología para descartar endometriosis vesical.',tiempoInf:'',efi:'',factorMasc:'',permTub:'',tra:'ninguna',ciclosFIV:'0',notesFert:'',createdAt:'2024-05-10T10:00:00.000Z',updatedAt:'2024-05-10T10:00:00.000Z',historial:[{id:'s5a',fecha:'2024-05-10T10:00:00.000Z',evaD:'6',evaP:'3',hgb:'13.1',amh:'3.8',tamEndo:'',tamMioma:'',volUt:'',txMed:['Progestágenos (oral)','AINEs'],txQx:[],respTx:'Parcial (EVA 5–6)',estadoTx:'medico',efi:'',proxRev:'2025-07-15',nota:'Primera visita. Hematuria cíclica. Eco negativa. Inicio empírico. RM solicitada.'}]}
 ];
 
 function loadDemo(){
