@@ -93,6 +93,10 @@ input[type=range].fc{padding:4px 0;border:none;background:transparent;cursor:poi
 .tab{padding:9px 13px;cursor:pointer;color:var(--text2);font-size:13px;font-weight:500;white-space:nowrap;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .15s;user-select:none}
 .tab:hover{color:var(--text)}
 .tab.on{color:var(--pk);border-bottom-color:var(--pk)}
+.ftbdg{display:inline-flex;align-items:center;justify-content:center;margin-left:5px;min-width:16px;height:16px;padding:0 4px;border-radius:99px;font-size:9px;font-weight:700;vertical-align:middle;transition:all .2s}
+.ftbdg.full{background:var(--gr);color:#fff}
+.ftbdg.part{background:var(--or);color:#fff}
+.ftbdg.empty{display:none}
 /* CHIPS */
 .chips{display:flex;flex-wrap:wrap;gap:5px}
 .chip{padding:4px 11px;border-radius:99px;font-size:12px;font-weight:500;border:1px solid var(--border2);cursor:pointer;color:var(--text2);background:var(--bg3);transition:all .15s;user-select:none}
@@ -254,7 +258,7 @@ button,a{touch-action:manipulation}
 <body>
 <div id="mov" class="mov" onclick="cls()"></div>
 <aside class="sidebar" id="sb">
-  <div class="slogo"><div class="lico">🌸</div><div class="ltxt"><strong>GinecoApp Pro</strong><span>ESHRE · SEGO 2025</span></div></div>
+  <div class="slogo"><div class="lico">🌸</div><div class="ltxt"><strong>GineApp Pro</strong><span>ESHRE · SEGO 2025</span></div></div>
   <nav>
     <div class="nlbl">Principal</div>
     <button class="nb on" onclick="go('dashboard',this)"><span class="ico">📊</span>Dashboard</button>
@@ -269,7 +273,7 @@ button,a{touch-action:manipulation}
     <button class="nb" onclick="go('guias',this)"><span class="ico">📋</span>Guías 2025</button>
     <button class="nb" onclick="go('informes',this)"><span class="ico">📄</span>Informes</button>
   </nav>
-  <div class="sfoot"><div>ESHRE 2022 · SEGO 2025</div><div class="c3">v2.1 — J.M.F. Carreira</div></div>
+  <div class="sfoot"><div>ESHRE 2022 · SEGO 2025</div><div class="c3">v2.2 — J.M.F. Carreira — 2026</div></div>
 </aside>
 <main class="main">
   <header class="topbar">
@@ -303,6 +307,17 @@ button,a{touch-action:manipulation}
       <div class="box bi2 mt2u"><div class="bt">📌 Recordatorio ESHRE 2022</div>Imagen (eco/RM) + tratamiento empírico reemplazan la laparoscopía como primer paso diagnóstico.</div>
     </div>
   </div>
+  <!-- WIDGET ALERTAS REVISIONES -->
+  <div class="card mt4">
+    <div class="chd">
+      <div>
+        <div class="ct">⏰ Revisiones próximas</div>
+        <div class="cs">Pacientes con cita en los próximos 14 días</div>
+      </div>
+      <span class="tag tr" id="bdgAlert" style="display:none">0 vencidas</span>
+    </div>
+    <div id="dashAlerts"></div>
+  </div>
   <div class="g3 mt4">
     <button class="card" style="border:1px dashed var(--border2);text-align:center;cursor:pointer;padding:18px 12px;transition:border-color .15s;background:var(--card)" onclick="go('nueva',null)" onmouseover="this.style.borderColor='var(--pk)'" onmouseout="this.style.borderColor='var(--border2)'">
       <div style="font-size:24px;margin-bottom:6px">➕</div><div class="f6 sm">Nueva paciente</div><div class="xs c2 mt2u">Registrar caso clínico</div>
@@ -335,11 +350,11 @@ button,a{touch-action:manipulation}
   <div class="card">
     <div class="chd"><div><div class="ct" id="fHT">Nueva paciente</div><div class="cs">Datos clínicos completos</div></div></div>
     <div class="tabs" id="fTabs">
-      <div class="tab on" onclick="fTab(0,this)">Datos</div>
-      <div class="tab" onclick="fTab(1,this)">Síntomas</div>
-      <div class="tab" onclick="fTab(2,this)">Diagnóstico</div>
-      <div class="tab" onclick="fTab(3,this)">Tratamiento</div>
-      <div class="tab" onclick="fTab(4,this)">Fertilidad</div>
+      <div class="tab on" onclick="fTab(0,this)">Datos<span class="ftbdg" id="ftb0"></span></div>
+      <div class="tab" onclick="fTab(1,this)">Síntomas<span class="ftbdg" id="ftb1"></span></div>
+      <div class="tab" onclick="fTab(2,this)">Diagnóstico<span class="ftbdg" id="ftb2"></span></div>
+      <div class="tab" onclick="fTab(3,this)">Tratamiento<span class="ftbdg" id="ftb3"></span></div>
+      <div class="tab" onclick="fTab(4,this)">Fertilidad<span class="ftbdg" id="ftb4"></span></div>
     </div>
     <div id="ft0">
       <div class="fr2"><div class="fg"><label class="fl">Nombre completo *</label><input class="fc" id="fN" placeholder="Apellidos, Nombre"></div><div class="fg"><label class="fl">NHC / Expediente</label><input class="fc" id="fNHC" placeholder="Número historia"></div></div>
@@ -377,6 +392,55 @@ button,a{touch-action:manipulation}
         <div class="fg"><label class="fl">Demora diagnóstica</label><select class="fc" id="fDem"><option value="">—</option><option>&lt;1 año</option><option>1–3 años</option><option>3–7 años</option><option>&gt;7 años</option></select><div class="fh">Media global: 7–12 años</div></div>
       </div>
       <div class="fg"><label class="fl">Observaciones</label><textarea class="fc" id="fObs" placeholder="Patrón cíclico, factores agravantes…"></textarea></div>
+      <hr class="div">
+      <div class="box bi2 mb3"><div class="bt">📋 EHP-5 — Calidad de vida (ESHRE 2022 Rec.38)</div>Impacto de los síntomas en las últimas 4 semanas. 0 = Nunca · 1 = A veces · 2 = Frecuentemente · 3 = Siempre</div>
+      <div class="fr2">
+        <div class="fg">
+          <label class="fl">🏃 Actividad diaria / trabajo</label>
+          <div style="display:flex;align-items:center;gap:10px">
+            <input type="range" id="ehp1" min="0" max="3" value="0" class="fc" style="flex:1" oninput="uEHP()">
+            <span id="ehp1v" style="min-width:18px;font-weight:700;color:var(--pk)">0</span>
+          </div>
+        </div>
+        <div class="fg">
+          <label class="fl">❤️ Vida sexual</label>
+          <div style="display:flex;align-items:center;gap:10px">
+            <input type="range" id="ehp2" min="0" max="3" value="0" class="fc" style="flex:1" oninput="uEHP()">
+            <span id="ehp2v" style="min-width:18px;font-weight:700;color:var(--pk)">0</span>
+          </div>
+        </div>
+        <div class="fg">
+          <label class="fl">👥 Relaciones sociales / familia</label>
+          <div style="display:flex;align-items:center;gap:10px">
+            <input type="range" id="ehp3" min="0" max="3" value="0" class="fc" style="flex:1" oninput="uEHP()">
+            <span id="ehp3v" style="min-width:18px;font-weight:700;color:var(--pk)">0</span>
+          </div>
+        </div>
+        <div class="fg">
+          <label class="fl">🧠 Bienestar emocional</label>
+          <div style="display:flex;align-items:center;gap:10px">
+            <input type="range" id="ehp4" min="0" max="3" value="0" class="fc" style="flex:1" oninput="uEHP()">
+            <span id="ehp4v" style="min-width:18px;font-weight:700;color:var(--pk)">0</span>
+          </div>
+        </div>
+        <div class="fg">
+          <label class="fl">😴 Sueño y energía</label>
+          <div style="display:flex;align-items:center;gap:10px">
+            <input type="range" id="ehp5" min="0" max="3" value="0" class="fc" style="flex:1" oninput="uEHP()">
+            <span id="ehp5v" style="min-width:18px;font-weight:700;color:var(--pk)">0</span>
+          </div>
+        </div>
+        <div class="fg" style="display:flex;align-items:center;gap:12px;padding:10px 12px;background:var(--bg3);border-radius:var(--r2);border:1px solid var(--border2)">
+          <div class="scr" id="ehpR" style="border-color:var(--gr);width:52px;height:52px;flex-shrink:0">
+            <div class="sn" id="ehpN" style="color:var(--gr);font-size:16px">0</div>
+            <div class="sl2">/ 15</div>
+          </div>
+          <div>
+            <div id="ehpLbl" class="f6 sm" style="color:var(--gr)">Sin impacto</div>
+            <div id="ehpSub" class="xs c2">Calidad de vida no afectada</div>
+          </div>
+        </div>
+      </div>
     </div>
     <div id="ft2" style="display:none">
       <div class="fr2">
@@ -595,19 +659,14 @@ button,a{touch-action:manipulation}
       <div class="card">
         <div class="ct mb3">📐 Escala STEPW</div>
         <div class="box bi2 mb3"><div class="bt">📊 Sistema STEPW</div>Determina complejidad de la miomectomía histeroscópica. Predice 1 vs 2 tiempos quirúrgicos.</div>
-        <table class="tbl">
-          <tr><th>Parámetro</th><th>0 pts</th><th>1 pt</th><th>2 pts</th></tr>
-          <tr><td><strong>S</strong>ize</td><td>&lt;2cm</td><td>2–5cm</td><td>&gt;5cm</td></tr>
-          <tr><td><strong>T</strong>opografía</td><td>Bajo</td><td>Medio</td><td>Fúndico</td></tr>
-          <tr><td><strong>E</strong>xtensión</td><td>0%</td><td>1–50%</td><td>&gt;50%</td></tr>
-          <tr><td><strong>P</strong>enetración</td><td>Tipo 0</td><td>Tipo 1</td><td>Tipo 2</td></tr>
-          <tr><td><strong>W</strong>all lateral</td><td>No</td><td>—</td><td>Sí</td></tr>
-        </table>
-        <div class="g3 mt3">
+        <div class="g3 mb3" style="gap:8px">
           <div class="card tc" style="padding:9px;border-color:var(--gr)"><div class="cg f7">0–4</div><div class="xs">Bajo · 1 tiempo</div></div>
           <div class="card tc" style="padding:9px;border-color:var(--or)"><div class="co f7">5–6</div><div class="xs">Intermedio</div></div>
           <div class="card tc" style="padding:9px;border-color:var(--rd)"><div class="cr f7">7–9</div><div class="xs">Alto · 2 tiempos</div></div>
         </div>
+        <button class="btn bp wf" onclick="goScoresSTEPW()" style="justify-content:center;gap:8px">
+          📐 Abrir calculadora STEPW interactiva →
+        </button>
       </div>
     </div>
   </div>
@@ -708,6 +767,111 @@ button,a{touch-action:manipulation}
       </div>
     </div>
   </div>
+  <!-- STEPW CALC -->
+  <div class="card mt4">
+    <div class="chd">
+      <div><div class="ct">📐 Calculadora STEPW — Miomectomía Histeroscópica</div><div class="cs">Predice complejidad quirúrgica y necesidad de 1 vs 2 tiempos</div></div>
+      <span class="tag to">SEGO 2025</span>
+    </div>
+    <div class="g2">
+      <!-- Columna izquierda: parámetros -->
+      <div>
+        <!-- S: Size -->
+        <div class="fg">
+          <label class="fl"><strong>S</strong>ize — Tamaño del mioma</label>
+          <div class="chips" id="stpS">
+            <div class="chip on" onclick="stpSel('stpS',this,0)">0 · &lt;2 cm</div>
+            <div class="chip"    onclick="stpSel('stpS',this,1)">1 · 2–5 cm</div>
+            <div class="chip"    onclick="stpSel('stpS',this,2)">2 · &gt;5 cm</div>
+          </div>
+        </div>
+        <!-- T: Topografía -->
+        <div class="fg">
+          <label class="fl"><strong>T</strong>opografía — Localización en cavidad</label>
+          <div class="chips" id="stpT">
+            <div class="chip on" onclick="stpSel('stpT',this,0)">0 · Ístmico / bajo</div>
+            <div class="chip"    onclick="stpSel('stpT',this,1)">1 · Cuerpo / medio</div>
+            <div class="chip"    onclick="stpSel('stpT',this,2)">2 · Fúndico</div>
+          </div>
+        </div>
+        <!-- E: Extensión -->
+        <div class="fg">
+          <label class="fl"><strong>E</strong>xtensión intracavitaria</label>
+          <div class="chips" id="stpE">
+            <div class="chip on" onclick="stpSel('stpE',this,0)">0 · 0% (pediculado)</div>
+            <div class="chip"    onclick="stpSel('stpE',this,1)">1 · 1–50%</div>
+            <div class="chip"    onclick="stpSel('stpE',this,2)">2 · &gt;50%</div>
+          </div>
+        </div>
+        <!-- P: Penetración -->
+        <div class="fg">
+          <label class="fl"><strong>P</strong>enetración en pared uterina</label>
+          <div class="chips" id="stpP">
+            <div class="chip on" onclick="stpSel('stpP',this,0)">0 · Tipo 0 (sin penetración)</div>
+            <div class="chip"    onclick="stpSel('stpP',this,1)">1 · Tipo 1 (&lt;50% intramural)</div>
+            <div class="chip"    onclick="stpSel('stpP',this,2)">2 · Tipo 2 (≥50% intramural)</div>
+          </div>
+        </div>
+        <!-- W: Wall lateral -->
+        <div class="fg">
+          <label class="fl"><strong>W</strong>all — Contacto con pared lateral</label>
+          <div class="chips" id="stpW">
+            <div class="chip on" onclick="stpSel('stpW',this,0)">0 · No contacta pared lateral</div>
+            <div class="chip"    onclick="stpSel('stpW',this,2)">2 · Sí contacta pared lateral</div>
+          </div>
+        </div>
+      </div>
+      <!-- Columna derecha: resultado -->
+      <div class="flex fc2 aic jcc g3u">
+        <div class="scr" id="stpR" style="border-color:var(--gr);width:86px;height:86px">
+          <div class="sn" id="stpN" style="color:var(--gr);font-size:28px">0</div>
+          <div class="sl2">/ 10</div>
+        </div>
+        <div id="stpLbl" class="f6 sm tc" style="color:var(--gr)">Riesgo bajo</div>
+        <div id="stpBox" class="box bo wf tc">
+          ✅ <strong>1 tiempo quirúrgico</strong><br>
+          <span class="xs c2">Histeroscopia en un solo acto</span>
+        </div>
+        <div id="stpDesg" class="xs c2 tc" style="max-width:190px;line-height:1.6">
+          Score 0–4: resección completa en un tiempo con alta probabilidad de éxito.
+        </div>
+        <!-- Desglose puntuación -->
+        <div id="stpBreak" style="width:100%;margin-top:4px">
+          <div class="xs c3 f6 mb2" style="text-align:center;text-transform:uppercase;letter-spacing:.8px">Desglose</div>
+          <div style="display:grid;grid-template-columns:auto 1fr auto;gap:3px 8px;font-size:11px">
+            <span class="c3">S</span><div class="rbar" style="align-self:center"><div class="rf" id="brkS" style="width:0%;background:var(--or)"></div></div><span id="vS" class="f6" style="min-width:14px;text-align:right">0</span>
+            <span class="c3">T</span><div class="rbar" style="align-self:center"><div class="rf" id="brkT" style="width:0%;background:var(--or)"></div></div><span id="vT" class="f6" style="min-width:14px;text-align:right">0</span>
+            <span class="c3">E</span><div class="rbar" style="align-self:center"><div class="rf" id="brkE" style="width:0%;background:var(--or)"></div></div><span id="vE" class="f6" style="min-width:14px;text-align:right">0</span>
+            <span class="c3">P</span><div class="rbar" style="align-self:center"><div class="rf" id="brkP" style="width:0%;background:var(--or)"></div></div><span id="vP" class="f6" style="min-width:14px;text-align:right">0</span>
+            <span class="c3">W</span><div class="rbar" style="align-self:center"><div class="rf" id="brkW" style="width:0%;background:var(--or)"></div></div><span id="vW" class="f6" style="min-width:14px;text-align:right">0</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- Tabla referencia rápida -->
+    <hr class="div">
+    <div class="g3 mt2u" style="gap:8px">
+      <div class="card tc" style="padding:10px;border-color:var(--gr)">
+        <div class="cg f7" style="font-size:17px">0 – 4</div>
+        <div class="xs f6 mt2u" style="color:var(--gr)">Bajo riesgo</div>
+        <div class="xs c2 mt2u">1 tiempo · Alta tasa resección completa</div>
+      </div>
+      <div class="card tc" style="padding:10px;border-color:var(--or)">
+        <div class="co f7" style="font-size:17px">5 – 6</div>
+        <div class="xs f6 mt2u" style="color:var(--or)">Riesgo intermedio</div>
+        <div class="xs c2 mt2u">Valorar individualmente · Cirujano experto</div>
+      </div>
+      <div class="card tc" style="padding:10px;border-color:var(--rd)">
+        <div class="cr f7" style="font-size:17px">7 – 9</div>
+        <div class="xs f6 mt2u" style="color:var(--rd)">Riesgo alto</div>
+        <div class="xs c2 mt2u">2 tiempos · Considerar otra técnica</div>
+      </div>
+    </div>
+    <div class="box bw mt3">
+      <div class="bt">⚠️ Consideraciones pre-histeroscopia</div>
+      <div class="sm">Score ≥5 con mioma único: puede intentarse en 1 tiempo con cirujano experto. Score ≥7: plantear alternativa (miomectomía laparoscópica, ablación por RF/HIFU) o pretratamiento con antagonistas GnRH para reducir volumen antes de la histeroscopia.</div>
+    </div>
+  </div>
 </div>
 <!-- GUÍAS -->
 <div id="s-guias" class="sec">
@@ -753,7 +917,19 @@ button,a{touch-action:manipulation}
     <div class="card mb3 no-print">
       <div class="ct mb3">📄 Generador de Informes Clínicos</div>
       <div class="fr2 mb3">
-        <div class="fg"><label class="fl">Seleccionar paciente</label><select class="fc" id="rPS"><option value="">— Seleccionar —</option></select></div>
+        <div class="fg"><label class="fl">Seleccionar paciente</label>
+          <div style="position:relative" id="rPSWrap">
+            <div style="display:flex;align-items:center;gap:6px;background:var(--inp);border:1px solid var(--border2);border-radius:var(--r2);padding:7px 10px;cursor:text" onclick="document.getElementById('rPSInput').focus()">
+              <span style="color:var(--text3);font-size:13px">🔍</span>
+              <input id="rPSInput" placeholder="Buscar paciente por nombre o NHC…" autocomplete="off"
+                style="background:none;border:none;outline:none;color:var(--text);font-size:13px;width:100%;font-family:inherit"
+                oninput="filterRPS(this.value)" onfocus="openRPS()" onkeydown="rPSKey(event)">
+              <span id="rPSClear" style="color:var(--text3);cursor:pointer;display:none;font-size:16px;line-height:1" onclick="clearRPS()">✕</span>
+            </div>
+            <div id="rPSList" style="display:none;position:absolute;top:calc(100% + 4px);left:0;right:0;background:var(--card);border:1px solid var(--border2);border-radius:var(--r2);max-height:220px;overflow-y:auto;z-index:50;box-shadow:var(--shadow)"></div>
+          </div>
+          <input type="hidden" id="rPS" value="">
+        </div>
         <div class="fg"><label class="fl">Tipo de informe</label>
           <select class="fc" id="rT">
             <option value="clinico">Informe Clínico Completo</option>
@@ -1042,9 +1218,59 @@ function flt(v){rPL();}
 // ═══════════════════════════════════════════════
 // TABS
 // ═══════════════════════════════════════════════
+// Definición de campos a contar por tab
+const TAB_FIELDS=[
+  // Tab 0 — Datos personales (8 campos clave)
+  ['fN','fNHC','fFN','fEC','fTel','fIMC','fMen','fPar'],
+  // Tab 1 — Síntomas (EVA dis + EVA pel + chips síntomas + EHP)
+  ['eDr','ePr','ehp1'],
+  // Tab 2 — Diagnóstico (dx + fechaDx + campos condicionales)
+  ['fDx','fFDx','fAS','fMD','fFG','fNM'],
+  // Tab 3 — Tratamiento (estado + próxima revisión)
+  ['fET','fPR','fRT'],
+  // Tab 4 — Fertilidad (EFI + TRA)
+  ['fTI','fEFI','fTRA']
+];
+// Chips que suman al conteo por tab
+const TAB_CHIPS=[
+  ['cAF'],           // tab 0
+  ['cSx'],           // tab 1
+  ['cLE','cSM'],     // tab 2
+  ['cTM','cTQ'],     // tab 3
+  []                 // tab 4
+];
+// Totales máximos por tab (campos + chips cuentan como 1)
+const TAB_MAX=[8,3,6,3,3];
+
+function uTabBadges(){
+  TAB_FIELDS.forEach((fields,ti)=>{
+    let filled=0;
+    // Contar inputs/selects con valor
+    fields.forEach(id=>{
+      const el=document.getElementById(id);
+      if(!el)return;
+      const v=el.value;
+      if(el.type==='range'){if(parseInt(v)>0)filled++;}
+      else if(v&&v.trim()&&v!=='ninguno'&&v!=='ninguna'&&v!=='no'&&v!=='')filled++;
+    });
+    // Contar chips seleccionados (cada grupo cuenta como 1 si hay alguno)
+    (TAB_CHIPS[ti]||[]).forEach(cid=>{
+      const any=document.querySelector('#'+cid+' .chip.on');
+      if(any)filled++;
+    });
+    const max=TAB_MAX[ti];
+    const bdg=document.getElementById('ftb'+ti);
+    if(!bdg)return;
+    if(filled===0){bdg.textContent='';bdg.className='ftbdg empty';}
+    else if(filled>=max){bdg.textContent='✓';bdg.className='ftbdg full';}
+    else{bdg.textContent=filled+'/'+max;bdg.className='ftbdg part';}
+  });
+}
+
 function fTab(n,btn){
   for(let i=0;i<=4;i++)document.getElementById('ft'+i).style.display=i===n?'block':'none';
   document.querySelectorAll('#fTabs .tab').forEach((t,i)=>t.classList.toggle('on',i===n));
+  uTabBadges();
 }
 function sw(pfx,n,btn){
   btn.closest('.tabs').querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('on',i===n));
@@ -1085,7 +1311,13 @@ function clr(){
   ['cAF','cSx','cLE','cSM','cTM','cTQ'].forEach(id=>document.querySelectorAll('#'+id+' .chip').forEach(c=>c.classList.remove('on')));
   document.getElementById('eDr').value=0;document.getElementById('eDv').textContent=0;
   document.getElementById('ePr').value=0;document.getElementById('ePv').textContent=0;
+  [1,2,3,4,5].forEach(i=>{
+    const s=document.getElementById('ehp'+i);if(s)s.value=0;
+    const v=document.getElementById('ehp'+i+'v');if(v)v.textContent=0;
+  });
+  uEHP();
   udF();fTab(0,null);
+  setTimeout(uTabBadges,0);
 }
 function gD(){
   return{
@@ -1103,6 +1335,11 @@ function gD(){
     antFam:gC('cAF'),sintomas:gC('cSx'),
     evaD:document.getElementById('eDr').value,
     evaP:document.getElementById('ePr').value,
+    ehp1:document.getElementById('ehp1').value,
+    ehp2:document.getElementById('ehp2').value,
+    ehp3:document.getElementById('ehp3').value,
+    ehp4:document.getElementById('ehp4').value,
+    ehp5:document.getElementById('ehp5').value,
     duracion:document.getElementById('fDur').value,
     demora:document.getElementById('fDem').value,
     obsSint:document.getElementById('fObs').value,
@@ -1149,6 +1386,12 @@ function fillF(p){
   sC('cAF',p.antFam);sC('cSx',p.sintomas);
   s('eDr',p.evaD||0);document.getElementById('eDv').textContent=p.evaD||0;
   s('ePr',p.evaP||0);document.getElementById('ePv').textContent=p.evaP||0;
+  [1,2,3,4,5].forEach(i=>{
+    const v=p['ehp'+i]||0;
+    const s2=document.getElementById('ehp'+i);if(s2)s2.value=v;
+    const lbl=document.getElementById('ehp'+i+'v');if(lbl)lbl.textContent=v;
+  });
+  uEHP();
   s('fDur',p.duracion);s('fDem',p.demora);s('fObs',p.obsSint);
   s('fDx',p.dx);udF();s('fFDx',p.fechaDx);
   s('fAS',p.asrm);s('fMD',p.metodoDx);
@@ -1163,10 +1406,21 @@ function fillF(p){
   s('fTI',p.tiempoInf);s('fEFI',p.efi);s('fFM',p.factorMasc);s('fPT',p.permTub);s('fTRA',p.tra||'ninguna');
   s('fCF',p.ciclosFIV);s('fNF',p.notesFert);
   fTab(0,null);
+  setTimeout(uTabBadges,50);
 }
 function savePt(){
   const d=gD();
   if(!d.nombre){tst('El nombre es obligatorio','er');return;}
+  // Validación coherencia clínica (no bloqueante)
+  const warns=validatePt(d);
+  if(warns.length){
+    showValidationModal(warns,()=>doSavePt(d));
+    return;
+  }
+  doSavePt(d);
+}
+
+function doSavePt(d){
   if(eId){
     const prev=DB.find(p=>p.id===eId)||{};
     // Preservar historial existente y añadir nuevo snapshot si hay cambio relevante
@@ -1187,6 +1441,78 @@ function savePt(){
   go('pacientes',document.querySelectorAll('.nb')[1]);
 }
 
+// ═══════════════════════════════════════════════
+// VALIDACIÓN COHERENCIA CLÍNICA
+// ═══════════════════════════════════════════════
+function validatePt(d){
+  const warns=[];
+  // 1. rASRM sin dx endo
+  if(d.asrm&&d.dx!=='endometriosis'&&d.dx!=='ambas')
+    warns.push('Estadio rASRM registrado pero el diagnóstico no es Endometriosis.');
+  // 2. FIGO sin dx miomas
+  if(d.figo!==''&&d.figo!==undefined&&d.dx!=='miomas'&&d.dx!=='ambas')
+    warns.push('Tipo FIGO registrado pero el diagnóstico no incluye Miomas.');
+  // 3. Deseo gestacional "no" con TRA activa
+  if(d.deseoGestacion==='no'&&d.tra&&d.tra!=='ninguna')
+    warns.push('Sin deseo gestacional pero con TRA registrada ('+d.tra+').');
+  // 4. Deseo gestacional "no" con ciclos FIV > 0
+  if(d.deseoGestacion==='no'&&parseInt(d.ciclosFIV)>0)
+    warns.push('Sin deseo gestacional pero con '+d.ciclosFIV+' ciclos FIV registrados.');
+  // 5. Hgb fuera de rango fisiológico
+  const hgb=parseFloat(d.hgb);
+  if(!isNaN(hgb)&&(hgb<4||hgb>20))
+    warns.push('Hemoglobina '+d.hgb+' g/dL fuera de rango fisiológico (4–20).');
+  // 6. AMH fuera de rango
+  const amh=parseFloat(d.amh);
+  if(!isNaN(amh)&&(amh<0||amh>15))
+    warns.push('AMH '+d.amh+' ng/mL fuera de rango esperado (0–15).');
+  // 7. IMC fuera de rango
+  const imc=parseFloat(d.imc);
+  if(!isNaN(imc)&&(imc<10||imc>70))
+    warns.push('IMC '+d.imc+' kg/m² fuera de rango fisiológico (10–70).');
+  // 8. EFI sin dx endo o miomas
+  if(d.efi&&d.dx===''&&d.dx!=='sospecha')
+    warns.push('EFI registrado sin diagnóstico principal definido.');
+  // 9. Localización endo sin dx endo
+  if(d.locEndo&&d.locEndo.length>0&&d.dx!=='endometriosis'&&d.dx!=='ambas')
+    warns.push('Localización de endometriosis registrada pero diagnóstico no incluye Endometriosis.');
+  // 10. Anticoncepción activa con deseo gestacional inmediato
+  const anticonc=d.anticoncepcion||'';
+  const acHormonal=['ACO combinados','Progestágenos','DIU-LNG','Implante','DIU cobre'].some(a=>anticonc.includes(a));
+  if(d.deseoGestacion==='si'&&acHormonal&&anticonc!=='Ninguna')
+    warns.push('Anticoncepción activa ('+anticonc+') con deseo gestacional inmediato.');
+  return warns;
+}
+
+function showValidationModal(warns,onConfirm){
+  // Crear modal de advertencia no bloqueante
+  let existing=document.getElementById('valModal');
+  if(existing)existing.remove();
+  const m=document.createElement('div');
+  m.id='valModal';
+  m.style.cssText='position:fixed;inset:0;z-index:400;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;padding:16px';
+  m.innerHTML=`
+    <div style="background:var(--card);border:1px solid var(--border2);border-radius:var(--r);max-width:420px;width:100%;padding:0;overflow:hidden;box-shadow:var(--shadow)">
+      <div style="background:rgba(232,152,48,.1);border-bottom:1px solid rgba(232,152,48,.25);padding:13px 16px;display:flex;align-items:center;gap:9px">
+        <span style="font-size:18px">⚠️</span>
+        <div>
+          <div style="font-weight:700;font-size:14px;color:var(--or)">Incoherencias detectadas</div>
+          <div style="font-size:11px;color:var(--text2)">Puedes guardar igualmente o volver a revisar</div>
+        </div>
+      </div>
+      <div style="padding:13px 16px;max-height:240px;overflow-y:auto">
+        ${warns.map(w=>`<div style="display:flex;gap:8px;padding:5px 0;border-bottom:1px solid var(--border);font-size:12.5px">
+          <span style="color:var(--or);flex-shrink:0">⚠</span><span style="color:var(--text)">${w}</span>
+        </div>`).join('')}
+      </div>
+      <div style="padding:12px 16px;display:flex;gap:8px;justify-content:flex-end;border-top:1px solid var(--border)">
+        <button class="btn bs bsm" onclick="document.getElementById('valModal').remove()">← Revisar</button>
+        <button class="btn bp bsm" onclick="document.getElementById('valModal').remove();(${onConfirm.toString()})()">Guardar igualmente</button>
+      </div>
+    </div>`;
+  document.body.appendChild(m);
+}
+
 // Crea un snapshot clínico de los campos que evolucionan
 function mkSnap(p){
   return{
@@ -1198,13 +1524,14 @@ function mkSnap(p){
     txMed:[...(p.txMed||[])], txQx:[...(p.txQx||[])],
     respTx:p.respTx, estadoTx:p.estadoTx,
     efi:p.efi, proxRev:p.proxRev,
+    ehp1:p.ehp1,ehp2:p.ehp2,ehp3:p.ehp3,ehp4:p.ehp4,ehp5:p.ehp5,
     nota:p.planTx||''
   };
 }
 
 // Detecta cambio clínico relevante entre dos versiones
 function hasClinicChange(prev,next){
-  const fields=['evaD','evaP','hgb','amh','tamEndo','tamMioma','volUt','respTx','estadoTx','efi'];
+  const fields=['evaD','evaP','hgb','amh','tamEndo','tamMioma','volUt','respTx','estadoTx','efi','ehp1','ehp2','ehp3','ehp4','ehp5'];
   if(fields.some(f=>String(prev[f]||'')!==String(next[f]||'')))return true;
   const arrDiff=(a,b)=>JSON.stringify([...(a||[])].sort())!==JSON.stringify([...(b||[])].sort());
   return arrDiff(prev.txMed,next.txMed)||arrDiff(prev.txQx,next.txQx);
@@ -1292,6 +1619,7 @@ function bCard(p){
       <div class="xs c3 f6 mb2" style="text-transform:uppercase;letter-spacing:.8px">Síntomas</div>
       <div style="display:flex;flex-wrap:wrap;gap:4px">${p.sintomas.map(s=>`<span class="tag tp">${s}</span>`).join('')}</div>
       ${+p.evaD>0?`<div class="xs c2 mt2u">EVA Dismenorrea: <strong>${p.evaD}/10</strong> · EVA Dolor: <strong>${p.evaP}/10</strong>${p.duracion?' · '+p.duracion:''}</div>`:''}
+      ${(()=>{const ehpT=[1,2,3,4,5].reduce((a,i)=>a+(parseInt(p['ehp'+i])||0),0);if(!ehpT)return'';const col=ehpT<=3?'var(--gr)':ehpT<=7?'var(--or)':'var(--rd)';const lbl=ehpT<=3?'Sin impacto':ehpT<=7?'Impacto moderado':ehpT<=11?'Impacto severo':'Impacto muy severo';return`<div class="xs c2 mt2u" style="display:flex;align-items:center;gap:6px"><span style="font-weight:700;color:${col}">EHP-5: ${ehpT}/15</span><span style="color:${col}">${lbl}</span></div>`;})()}
     </div>`:''}
   ${p.dx==='endometriosis'||p.dx==='ambas'?`
     <div style="border-left:3px solid var(--pk);padding-left:10px;margin-bottom:12px">
@@ -1493,6 +1821,22 @@ function getCtxRecs(p){
   const postQx=p.estadoTx==='quirurgico'||p.estadoTx==='mixto';
   const txQxLen=(p.txQx||[]).length>0;
 
+  // ── EHP-5: impacto calidad de vida ──
+  const ehpTotal=[1,2,3,4,5].reduce((a,i)=>a+(parseInt(p['ehp'+i])||0),0);
+  if(ehpTotal>=8){
+    const ehpLblCtx=ehpTotal>=12?'muy severo':'severo';
+    const dominios=[];
+    if(parseInt(p.ehp1)>=2)dominios.push('actividad diaria');
+    if(parseInt(p.ehp2)>=2)dominios.push('vida sexual');
+    if(parseInt(p.ehp3)>=2)dominios.push('relaciones sociales');
+    if(parseInt(p.ehp4)>=2)dominios.push('bienestar emocional');
+    if(parseInt(p.ehp5)>=2)dominios.push('sueño/energía');
+    recs.push({color:'var(--pu)',
+      titulo:`EHP-5 ${ehpTotal}/15 — Impacto ${ehpLblCtx} en calidad de vida`,
+      texto:`Dominios afectados: ${dominios.length?dominios.join(', '):'múltiples'}. ESHRE 2022 (Rec.38) recomienda apoyo psicológico y fisioterapia pélvica como coadyuvantes. Valorar escalada terapéutica si el tratamiento actual no mejora la calidad de vida.`,
+      seccion:'tratamiento',tab:0});
+  }
+
   // ── ENDOMETRIOSIS ──
   if(endo){
     // Sin diagnóstico confirmado / empírico
@@ -1550,9 +1894,9 @@ function getCtxRecs(p){
     if(!isNaN(figo)&&figo<=2){
       const tieneHisto=(p.txQx||[]).includes('Miomectomía histeroscópica');
       if(!tieneHisto){
-        recs.push({color:'var(--rd)',titulo:`Mioma submucoso FIGO ${p.figo} — acción prioritaria`,
-          texto:'Miomectomía histeroscópica indicada'+(gesta?' ANTES de concepción o TRA (SEGO 2025)':'. Evaluar con escala STEPW previa.')+' ',
-          seccion:'tratamiento',tab:2});
+        recs.push({color:'var(--rd)',titulo:`Mioma submucoso FIGO ${p.figo} — calcular STEPW`,
+          texto:'Miomectomía histeroscópica indicada'+(gesta?' ANTES de concepción o TRA (SEGO 2025)':'. ')+' Calcular score STEPW para determinar complejidad (1 vs 2 tiempos).',
+          seccion:'scores',tab:-1});
       }
     }
     // Mioma intramural >4cm con deseo gestacional
@@ -1622,6 +1966,22 @@ function navCtx(seccion,tab){
   cM();
   setTimeout(()=>{
     go(seccion,null);
+    // Scores: scroll directo a STEPW
+    if(seccion==='scores'){
+      setTimeout(()=>{
+        const el=document.querySelector('#s-scores .card.mt4');
+        if(el)el.scrollIntoView({behavior:'smooth',block:'start'});
+      },150);
+      return;
+    }
+    // Fertilidad: scroll a calc EFI
+    if(seccion==='fertilidad'){
+      setTimeout(()=>{
+        const el=document.querySelector('#s-fertilidad .card');
+        if(el)el.scrollIntoView({behavior:'smooth',block:'start'});
+      },150);
+      return;
+    }
     if(tab>=0){
       // Activar el tab correcto programáticamente
       const pfx=seccion==='algoritmos'?'al':'tx';
@@ -1648,6 +2008,15 @@ function openCtx(){
   if(!p)return;
   const el=document.getElementById('ctxPanel');
   if(el)el.scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+// Navegar a Escalas y hacer scroll a la calculadora STEPW
+function goScoresSTEPW(){
+  go('scores',null);
+  setTimeout(()=>{
+    const el=document.querySelector('#s-scores .card.mt4');
+    if(el)el.scrollIntoView({behavior:'smooth',block:'start'});
+  },280);
 }
 
 function oM(){document.getElementById('ptM').classList.add('open');document.body.style.overflow='hidden';}
@@ -1742,7 +2111,10 @@ function uBdg(){
   document.getElementById('bdgP').textContent=DB.length;
   const ov=DB.filter(p=>p.proxRev&&new Date(p.proxRev)<new Date()).length;
   const b=document.getElementById('bdgAlert');
-  if(b){b.textContent=ov;b.style.display=ov?'inline':'none';}
+  if(b){
+    b.textContent=ov===1?'1 vencida':ov+' vencidas';
+    b.style.display=ov?'inline-flex':'none';
+  }
 }
 
 function dRec(){
@@ -1780,6 +2152,66 @@ function cEFI(){
 }
 
 // ═══════════════════════════════════════════════
+// STEPW CALCULATOR
+// ═══════════════════════════════════════════════
+// Valores actuales de cada parámetro (0-2)
+const _stp={S:0,T:0,E:0,P:0,W:0};
+
+// Selección exclusiva dentro de cada grupo de chips STEPW
+function stpSel(grpId,el,val){
+  document.querySelectorAll('#'+grpId+' .chip').forEach(c=>c.classList.remove('on'));
+  el.classList.add('on');
+  _stp[grpId.replace('stp','')]=val;
+  cSTEPW();
+}
+
+function cSTEPW(){
+  const score=_stp.S+_stp.T+_stp.E+_stp.P+_stp.W;
+  const ring=document.getElementById('stpR');
+  const num=document.getElementById('stpN');
+  const lbl=document.getElementById('stpLbl');
+  const box=document.getElementById('stpBox');
+  const desg=document.getElementById('stpDesg');
+  if(!ring)return;
+
+  num.textContent=score;
+
+  // Colores y umbrales
+  let col,riesgo,tiempos,boxCls,desc;
+  if(score<=4){
+    col='var(--gr)';riesgo='Riesgo bajo';tiempos='1 tiempo quirúrgico';
+    boxCls='box bo wf tc';
+    desc='Score 0–4: resección completa en un tiempo con alta probabilidad de éxito.';
+  } else if(score<=6){
+    col='var(--or)';riesgo='Riesgo intermedio';tiempos='Valorar individualmente';
+    boxCls='box bw wf tc';
+    desc='Score 5–6: resección en 1 tiempo posible con cirujano experto. Informar del riesgo de 2º tiempo.';
+  } else {
+    col='var(--rd)';riesgo='Riesgo alto';tiempos='2 tiempos quirúrgicos';
+    boxCls='box br wf tc';
+    desc='Score 7–9: considerar 2 tiempos o técnica alternativa (laparoscopia, HIFU/RF, GnRH previo).';
+  }
+
+  ring.style.borderColor=col;
+  num.style.color=col;
+  lbl.style.color=col;
+  lbl.textContent=riesgo;
+  box.className=boxCls;
+  const ico=score<=4?'✅':score<=6?'⚠️':'🔴';
+  box.innerHTML=`${ico} <strong>${tiempos}</strong><br><span class="xs c2">${score<=4?'Histeroscopia en un solo acto':score<=6?'Decisión individualizada':'Planificar 2 tiempos o alternativa'}</span>`;
+  desg.textContent=desc;
+
+  // Desglose barras (cada parámetro sobre su máximo: S,T,E,P=2; W=2)
+  const maxPar=2;
+  ['S','T','E','P','W'].forEach(k=>{
+    const bar=document.getElementById('brk'+k);
+    const val=document.getElementById('v'+k);
+    if(bar){bar.style.width=(_stp[k]/maxPar*100)+'%';bar.style.background=col;}
+    if(val)val.textContent=_stp[k];
+  });
+}
+
+// ═══════════════════════════════════════════════
 // BB SCORE
 // ═══════════════════════════════════════════════
 function cBB(){
@@ -1789,6 +2221,45 @@ function cBB(){
   if(v<=3){ring.style.borderColor='var(--gr)';num.style.color='var(--gr)';txt.textContent='Sintomatología leve/ausente';}
   else if(v<=7){ring.style.borderColor='var(--or)';num.style.color='var(--or)';txt.textContent='Sintomatología moderada · Reevaluar tratamiento';}
   else{ring.style.borderColor='var(--rd)';num.style.color='var(--rd)';txt.textContent='Sintomatología severa · Intervención activa necesaria';}
+}
+
+// ═══════════════════════════════════════════════
+// EHP-5 CALIDAD DE VIDA
+// ═══════════════════════════════════════════════
+function uEHP(){
+  const vals=[1,2,3,4,5].map(i=>{
+    const el=document.getElementById('ehp'+i);
+    const v=el?parseInt(el.value)||0:0;
+    const lbl=document.getElementById('ehp'+i+'v');
+    if(lbl)lbl.textContent=v;
+    return v;
+  });
+  const total=vals.reduce((a,b)=>a+b,0);
+  const ring=document.getElementById('ehpR');
+  const num=document.getElementById('ehpN');
+  const lbl=document.getElementById('ehpLbl');
+  const sub=document.getElementById('ehpSub');
+  if(!ring)return;
+  num.textContent=total;
+  let col,texto,desc;
+  if(total<=3){
+    col='var(--gr)';texto='Sin impacto significativo';
+    desc='Calidad de vida no afectada o mínimamente afectada';
+  } else if(total<=7){
+    col='var(--or)';texto='Impacto moderado';
+    desc='Los síntomas afectan de forma notable a la vida diaria';
+  } else if(total<=11){
+    col='var(--rd)';texto='Impacto severo';
+    desc='Afectación importante — valorar escalada terapéutica';
+  } else {
+    col='var(--rd)';texto='Impacto muy severo';
+    desc='Afectación grave en todos los dominios — acción prioritaria';
+  }
+  ring.style.borderColor=col;
+  num.style.color=col;
+  lbl.style.color=col;
+  lbl.textContent=texto;
+  sub.textContent=desc;
 }
 
 // ═══════════════════════════════════════════════
@@ -1808,10 +2279,99 @@ function uEVA(){
 // ═══════════════════════════════════════════════
 // REPORTS
 // ═══════════════════════════════════════════════
+// ── Selector pacientes informes con búsqueda live ──
+let _rpsSelected={id:'',nombre:''};
+
 function fRS(){
-  const s=document.getElementById('rPS');
-  s.innerHTML='<option value="">— Seleccionar —</option>'+
-    DB.map(p=>`<option value="${p.id}">${p.nombre} (${age(p.fechaNac)} años)</option>`).join('');
+  // Resetear estado visual si DB cambió
+  const inp=document.getElementById('rPSInput');
+  const hid=document.getElementById('rPS');
+  if(inp&&!_rpsSelected.id){inp.value='';inp.placeholder='Buscar paciente por nombre o NHC…';}
+  if(hid)hid.value=_rpsSelected.id||'';
+}
+
+function openRPS(){
+  filterRPS(document.getElementById('rPSInput').value||'');
+}
+
+function filterRPS(q){
+  const list=document.getElementById('rPSList');
+  const clr=document.getElementById('rPSClear');
+  if(!list)return;
+  if(clr)clr.style.display=q?'inline':'none';
+  const matches=DB.filter(p=>{
+    const s=q.toLowerCase();
+    return !s||p.nombre.toLowerCase().includes(s)||(p.nhc||'').toLowerCase().includes(s);
+  }).slice(0,12);
+  if(!matches.length){
+    list.innerHTML='<div style="padding:10px 12px;font-size:12px;color:var(--text3)">Sin resultados</div>';
+  } else {
+    list.innerHTML=matches.map((p,i)=>`
+      <div class="rps-item" data-id="${p.id}" data-nombre="${p.nombre.replace(/"/g,'&quot;')}"
+        style="padding:8px 12px;cursor:pointer;font-size:13px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px"
+        onmousedown="selectRPS('${p.id}','${p.nombre.replace(/'/g,"\'")}',event)"
+        onmouseover="this.style.background='var(--bg3)'" onmouseout="this.style.background=''">
+        <div class="pav" style="width:26px;height:26px;font-size:9px;flex-shrink:0;background:${avC(p.nombre)}1a;color:${avC(p.nombre)}">${ini(p.nombre)}</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${p.nombre}</div>
+          <div style="font-size:11px;color:var(--text2)">${age(p.fechaNac)} años${p.nhc?' · NHC:'+p.nhc:''}${p.dx?' · '+({endometriosis:'Endo',miomas:'Miomas',ambas:'Endo+Miomas',sospecha:'Sospecha'}[p.dx]||''):''}</div>
+        </div>
+      </div>`).join('');
+  }
+  list.style.display='block';
+  // cerrar al hacer click fuera
+  setTimeout(()=>document.addEventListener('click',closeRPSOutside,{once:true}),0);
+}
+
+function closeRPSOutside(e){
+  const wrap=document.getElementById('rPSWrap');
+  if(wrap&&!wrap.contains(e.target)) closeRPS();
+}
+
+function closeRPS(){
+  const list=document.getElementById('rPSList');
+  if(list)list.style.display='none';
+}
+
+function selectRPS(id,nombre,e){
+  if(e)e.preventDefault();
+  _rpsSelected={id,nombre};
+  document.getElementById('rPS').value=id;
+  document.getElementById('rPSInput').value=nombre;
+  document.getElementById('rPSClear').style.display='inline';
+  closeRPS();
+}
+
+function clearRPS(){
+  _rpsSelected={id:'',nombre:''};
+  document.getElementById('rPS').value='';
+  document.getElementById('rPSInput').value='';
+  document.getElementById('rPSClear').style.display='none';
+  document.getElementById('rPSInput').focus();
+  filterRPS('');
+}
+
+function rPSKey(e){
+  const list=document.getElementById('rPSList');
+  if(!list||list.style.display==='none') return;
+  const items=list.querySelectorAll('.rps-item');
+  const cur=[...items].findIndex(i=>i.style.background&&i.style.background!=='');
+  if(e.key==='ArrowDown'){
+    e.preventDefault();
+    const next=cur<items.length-1?cur+1:0;
+    items.forEach((i,j)=>i.style.background=j===next?'var(--bg3)':'');
+  } else if(e.key==='ArrowUp'){
+    e.preventDefault();
+    const prev=cur>0?cur-1:items.length-1;
+    items.forEach((i,j)=>i.style.background=j===prev?'var(--bg3)':'');
+  } else if(e.key==='Enter'){
+    e.preventDefault();
+    const active=[...items].find(i=>i.style.background&&i.style.background!=='');
+    if(active) selectRPS(active.dataset.id,active.dataset.nombre,null);
+    else if(items.length===1) selectRPS(items[0].dataset.id,items[0].dataset.nombre,null);
+  } else if(e.key==='Escape'){
+    closeRPS();
+  }
 }
 function gRpt(){
   const id=document.getElementById('rPS').value;
@@ -1823,8 +2383,8 @@ function gRpt(){
   document.getElementById('rOut').scrollIntoView({behavior:'smooth'});
   tst('Informe generado ✓','ok');
 }
-function qR(){const p=DB.find(x=>x.id===cId);if(!p)return;cM();go('informes',null);setTimeout(()=>{fRS();document.getElementById('rPS').value=cId;gRpt();},200);}
-function qRid(id){cId=id;go('informes',null);setTimeout(()=>{fRS();document.getElementById('rPS').value=id;gRpt();},200);}
+function qR(){const p=DB.find(x=>x.id===cId);if(!p)return;cM();go('informes',null);setTimeout(()=>{fRS();selectRPS(cId,p.nombre,null);gRpt();},200);}
+function qRid(id){cId=id;const p=DB.find(x=>x.id===id);go('informes',null);setTimeout(()=>{fRS();if(p)selectRPS(id,p.nombre,null);gRpt();},200);}
 
 function bRpt(p,type){
   const fecha=new Date().toLocaleDateString('es',{day:'numeric',month:'long',year:'numeric'});
@@ -1836,7 +2396,9 @@ function bRpt(p,type){
   let body='';
   if(type==='clinico'||type==='dx'){
     body+=`<div class="rs"><h3>1. Datos de la Paciente</h3>${row('Nombre',p.nombre)}${row('NHC',p.nhc)}${row('Edad',age(p.fechaNac)+' años')}${row('Fecha nacimiento',p.fechaNac?new Date(p.fechaNac).toLocaleDateString('es'):'—')}${row('Estado civil',p.estadoCivil)}${row('Paridad',p.paridad)}${row('IMC',p.imc?p.imc+' kg/m²':'—')}${row('Menarquia',p.menarquia?p.menarquia+' años':'—')}</div>`;
-    body+=`<div class="rs"><h3>2. Síntomas</h3>${row('Síntomas',(p.sintomas||[]).join(', '))}${row('EVA dismenorrea',(p.evaD||0)+'/10')}${row('EVA dolor pélvico',(p.evaP||0)+'/10')}${row('Duración síntomas',p.duracion)}${row('Demora diagnóstica',p.demora)}</div>`;
+    const ehpTotal=[1,2,3,4,5].reduce((a,i)=>a+(parseInt(p['ehp'+i])||0),0);
+    const ehpLblR=ehpTotal<=3?'Sin impacto significativo ('+ehpTotal+'/15)':ehpTotal<=7?'Impacto moderado ('+ehpTotal+'/15)':ehpTotal<=11?'Impacto severo ('+ehpTotal+'/15)':'Impacto muy severo ('+ehpTotal+'/15)';
+    body+=`<div class="rs"><h3>2. Síntomas y Calidad de Vida</h3>${row('Síntomas',(p.sintomas||[]).join(', '))}${row('EVA dismenorrea',(p.evaD||0)+'/10')}${row('EVA dolor pélvico',(p.evaP||0)+'/10')}${row('Duración síntomas',p.duracion)}${row('Demora diagnóstica',p.demora)}${ehpTotal>0?row('EHP-5 Calidad de vida',ehpLblR):''}${ehpTotal>0?row('  · Actividad diaria',p.ehp1+'/3'):''}${ehpTotal>0?row('  · Vida sexual',p.ehp2+'/3'):''}${ehpTotal>0?row('  · Relaciones sociales',p.ehp3+'/3'):''}${ehpTotal>0?row('  · Bienestar emocional',p.ehp4+'/3'):''}${ehpTotal>0?row('  · Sueño y energía',p.ehp5+'/3'):''}</div>`;
     body+=`<div class="rs"><h3>3. Diagnóstico</h3>${row('Patología',dxL[p.dx]||'—')}${row('Fecha diagnóstico',p.fechaDx?new Date(p.fechaDx).toLocaleDateString('es'):'—')}${row('Método',p.metodoDx)}${(p.dx==='endometriosis'||p.dx==='ambas')?row('Estadio rASRM',p.asrm?'Estadio '+p.asrm:'—')+row('Localización',(p.locEndo||[]).join(', '))+row('Adenomiosis',p.adenomiosis):''}${(p.dx==='miomas'||p.dx==='ambas')?row('Tipo FIGO','Tipo '+(p.figo||'?'))+row('N.º miomas',p.numMiomas)+row('Tamaño mayor',p.tamMioma?p.tamMioma+' mm':'—')+row('Hgb',p.hgb?p.hgb+' g/dL':'—')+row('AMH',p.amh?p.amh+' ng/mL':'—'):''}${row('Notas',p.notesDx)}</div>`;
   }
   if(type==='clinico'||type==='tx'){
@@ -1897,11 +2459,11 @@ function tst(msg,type='in'){
 // DEMO DATA  (se carga solo si la BD está vacía)
 // ═══════════════════════════════════════════════
 const DEMO=[
-  {id:'demo_1',nombre:'García Martínez, Carmen',nhc:'2024-001',fechaNac:'1988-03-15',estadoCivil:'Casada',telefono:'+34 612 345 678',imc:'23.4',menarquia:'12',paridad:'G1 P1 A0',anticoncepcion:'ACO combinados',deseoGestacion:'no',antFam:['Endometriosis familiar'],sintomas:['Dismenorrea','Dispareunia profunda','Disquecia','Fatiga crónica'],evaD:'8',evaP:'6',duracion:'3–5 años',demora:'3–7 años',obsSint:'Dismenorrea incapacitante desde menarquia. Mejora parcial con ACO.',dx:'endometriosis',fechaDx:'2022-06-10',asrm:'III',metodoDx:'Laparoscopía + histología',locEndo:['Endometrioma ovárico','Ligamentos uterosacros','Endometriosis profunda'],tamEndo:'28',adenomiosis:'Focal',figo:'',numMiomas:'1',tamMioma:'',volUt:'',distorsion:'No',sintMioma:[],hgb:'11.8',amh:'1.9',notesDx:'Endometrioma derecho 28mm. Endometriosis profunda USL bilateral confirmada por RM.',estadoTx:'medico',txMed:['DIU-LNG','AINEs'],txQx:['Laparoscopía diagnóstica','Escisión endometriosis'],respTx:'Buena (EVA 3–4)',proxRev:'2025-09-15',planTx:'Mantener DIU-LNG 24 meses. Reevaluar AMH en 6 meses. Si recurrencia dolor: considerar GnRH antagonista.',tiempoInf:'',efi:'',factorMasc:'',permTub:'',tra:'ninguna',ciclosFIV:'0',notesFert:'',createdAt:'2024-01-10T10:00:00.000Z',updatedAt:'2024-06-15T09:30:00.000Z',historial:[{id:'s1a',fecha:'2024-06-15T09:30:00.000Z',evaD:'4',evaP:'3',hgb:'12.1',amh:'1.8',tamEndo:'18',tamMioma:'',volUt:'',txMed:['DIU-LNG','AINEs'],txQx:[],respTx:'Buena (EVA 3–4)',estadoTx:'medico',efi:'',proxRev:'2025-09-15',nota:'Endometrioma reducido a 18mm. Buena tolerancia DIU-LNG. Adenomiosis estable.'},{id:'s1b',fecha:'2024-03-20T10:00:00.000Z',evaD:'6',evaP:'5',hgb:'11.5',amh:'1.9',tamEndo:'24',tamMioma:'',volUt:'',txMed:['DIU-LNG','AINEs'],txQx:[],respTx:'Parcial (EVA 5–6)',estadoTx:'medico',efi:'',proxRev:'2024-06-15',nota:'3 meses post-cirugía. DIU-LNG recién colocado. Dolor mejorando.'},{id:'s1c',fecha:'2024-01-10T10:00:00.000Z',evaD:'8',evaP:'6',hgb:'11.8',amh:'1.9',tamEndo:'28',tamMioma:'',volUt:'',txMed:['AINEs'],txQx:['Laparoscopía diagnóstica','Escisión endometriosis'],respTx:'Escasa (EVA 7–8)',estadoTx:'quirurgico',efi:'',proxRev:'2024-03-20',nota:'Diagnóstico: Endometriosis III. Endometrioma 28mm. Cirugía laparoscópica realizada.'}]},
-  {id:'demo_2',nombre:'López Fernández, Ana',nhc:'2024-002',fechaNac:'1992-07-22',estadoCivil:'Pareja estable',telefono:'+34 623 456 789',imc:'24.1',menarquia:'13',paridad:'G0 P0 A0',anticoncepcion:'Ninguna',deseoGestacion:'si',antFam:[],sintomas:['Dismenorrea','Infertilidad','Dolor pélvico crónico'],evaD:'7',evaP:'5',duracion:'1–3 años',demora:'1–3 años',obsSint:'Infertilidad primaria 18 meses. Ciclos regulares 28 días.',dx:'endometriosis',fechaDx:'2023-11-20',asrm:'II',metodoDx:'Ecografía TV',locEndo:['Peritoneal superficial','Endometrioma ovárico'],tamEndo:'18',adenomiosis:'No',figo:'',numMiomas:'1',tamMioma:'',volUt:'',distorsion:'No',sintMioma:[],hgb:'12.4',amh:'2.1',notesDx:'Endometrioma izquierdo 18mm. Ecografía TV con signos de endometriosis peritoneal.',estadoTx:'mixto',txMed:['ACO combinados'],txQx:['Quistectomía ovárica'],respTx:'Parcial (EVA 5–6)',proxRev:'2025-08-20',planTx:'Post-quistectomía. Calcular EFI intraoperatorio. Si EFI≥7: intento natural 6 meses. Si EFI<7: FIV directa.',tiempoInf:'18',efi:'6',factorMasc:'Normal',permTub:'Bilateral permeable',tra:'ninguna',ciclosFIV:'0',notesFert:'AMH 2.1. Pareja con seminograma normal. Pendiente laparoscopía diagnóstica-terapéutica.',createdAt:'2024-02-05T11:00:00.000Z',updatedAt:'2024-07-01T08:00:00.000Z',historial:[{id:'s2a',fecha:'2024-07-01T08:00:00.000Z',evaD:'5',evaP:'4',hgb:'12.4',amh:'2.0',tamEndo:'12',tamMioma:'',volUt:'',txMed:[],txQx:['Quistectomía ovárica'],respTx:'Parcial (EVA 5–6)',estadoTx:'mixto',efi:'6',proxRev:'2025-08-20',nota:'Post-quistectomía. EFI calculado=6. Pendiente decisión FIV vs intento natural.'},{id:'s2b',fecha:'2024-04-15T10:00:00.000Z',evaD:'7',evaP:'5',hgb:'12.2',amh:'2.1',tamEndo:'18',tamMioma:'',volUt:'',txMed:['ACO combinados'],txQx:[],respTx:'Parcial (EVA 5–6)',estadoTx:'medico',efi:'',proxRev:'2024-07-01',nota:'Endometrioma 18mm. Se mantiene ACO pre-cirugía. Infertilidad 14 meses.'},{id:'s2c',fecha:'2024-02-05T11:00:00.000Z',evaD:'7',evaP:'5',hgb:'12.5',amh:'2.1',tamEndo:'18',tamMioma:'',volUt:'',txMed:[],txQx:[],respTx:'',estadoTx:'ninguno',efi:'',proxRev:'2024-04-15',nota:'Primera consulta. Eco TV: endometrioma izquierdo 18mm. Infertilidad primaria 12 meses.'}]},
-  {id:'demo_3',nombre:'Rodríguez Sánchez, Elena',nhc:'2024-003',fechaNac:'1985-11-08',estadoCivil:'Casada',telefono:'+34 634 567 890',imc:'27.2',menarquia:'11',paridad:'G2 P2 A0',anticoncepcion:'Ninguna',deseoGestacion:'no',antFam:['Miomas'],sintomas:['Sangrado uterino abundante','Compresión vesical','Anemia','Dolor pélvico'],evaD:'4',evaP:'5',duracion:'1–3 años',demora:'<1 año',obsSint:'SUA con anemia ferropénica. Hgb 9.2 g/dL. Urgencia urinaria frecuente.',dx:'miomas',fechaDx:'2024-01-08',asrm:'',metodoDx:'',locEndo:[],tamEndo:'',adenomiosis:'Sospecha',figo:'4',numMiomas:'3',tamMioma:'62',volUt:'380',distorsion:'No',sintMioma:['SUA (sangrado abundante)','Compresión vesical','Anemia'],hgb:'9.2',amh:'3.4',notesDx:'3 miomas: FIGO 4 (62mm), FIGO 4 (38mm), FIGO 6 (25mm). Volumen uterino 380cc.',estadoTx:'medico',txMed:['Relugolix (antagonista)','Vitamina D','Ácido tranexámico'],txQx:[],respTx:'Buena (EVA 3–4)',proxRev:'2025-07-30',planTx:'Relugolix 40mg + TAB integrada. Objetivo: recuperar Hgb >12 g/dL en 3 meses, reducir volumen miomático antes de miomectomía laparoscópica.',tiempoInf:'',efi:'',factorMasc:'',permTub:'',tra:'ninguna',ciclosFIV:'0',notesFert:'',createdAt:'2024-01-20T09:00:00.000Z',updatedAt:'2024-05-10T14:00:00.000Z',historial:[{id:'s3a',fecha:'2024-05-10T14:00:00.000Z',evaD:'3',evaP:'3',hgb:'11.4',amh:'3.4',tamEndo:'',tamMioma:'55',volUt:'330',txMed:['Relugolix (antagonista)','Vitamina D'],txQx:[],respTx:'Buena (EVA 3–4)',estadoTx:'medico',efi:'',proxRev:'2025-07-30',nota:'Hgb subiendo: 9.2→10.6→11.4. Mioma mayor 55mm (-7mm). Sangrado casi ausente.'},{id:'s3b',fecha:'2024-03-12T09:00:00.000Z',evaD:'3',evaP:'3',hgb:'10.6',amh:'3.4',tamEndo:'',tamMioma:'60',volUt:'360',txMed:['Relugolix (antagonista)','Vitamina D','Ácido tranexámico'],txQx:[],respTx:'Buena (EVA 3–4)',estadoTx:'medico',efi:'',proxRev:'2024-05-10',nota:'2 meses Relugolix. Hgb 10.6. Sangrado reducido 80%. Bien tolerado.'},{id:'s3c',fecha:'2024-01-20T09:00:00.000Z',evaD:'4',evaP:'5',hgb:'9.2',amh:'3.4',tamEndo:'',tamMioma:'62',volUt:'380',txMed:['Ácido tranexámico'],txQx:[],respTx:'Escasa (EVA 7–8)',estadoTx:'ninguno',efi:'',proxRev:'2024-03-12',nota:'Diagnóstico: 3 miomas FIGO 4. Hgb 9.2 g/dL (anemia moderada-severa). Inicio Relugolix.'}]},
-  {id:'demo_4',nombre:'Martínez Ruiz, Sofia',nhc:'2024-004',fechaNac:'1990-04-30',estadoCivil:'Soltera',telefono:'+34 645 678 901',imc:'21.8',menarquia:'12',paridad:'G0 P0 A0',anticoncepcion:'Implante etonogestrel',deseoGestacion:'futuro',antFam:['Endometriosis familiar','Miomas'],sintomas:['Dismenorrea','Dispareunia profunda','Disquecia','Sangrado uterino abundante','Infertilidad'],evaD:'9',evaP:'7',duracion:'> 5 años',demora:'> 7 años',obsSint:'Diagnóstico tardío después de 8 años de síntomas. Múltiples consultas previas sin diagnóstico.',dx:'ambas',fechaDx:'2023-09-15',asrm:'IV',metodoDx:'RM pélvica',locEndo:['Endometrioma ovárico','Endometriosis profunda','Tabique rectovaginal','Ligamentos uterosacros','Intestinal'],tamEndo:'45',adenomiosis:'Difusa',figo:'2',numMiomas:'2',tamMioma:'35',volUt:'220',distorsion:'Sí',sintMioma:['SUA (sangrado abundante)','Dolor pélvico'],hgb:'10.1',amh:'1.2',notesDx:'Endometriosis estadio IV con endometrioma bilateral (45mm y 22mm). Mioma submucoso tipo 2 (35mm) con distorsión cavitaria. Adenomiosis difusa. Indicación de centro de excelencia.',estadoTx:'medico',txMed:['Agonistas GnRH','Dienogest','AINEs'],txQx:['Laparoscopía diagnóstica'],respTx:'Parcial (EVA 5–6)',proxRev:'2025-08-05',planTx:'Derivación a centro de excelencia endometriosis. Miomectomía histeroscópica tipo 2 previa. Preservación fertilidad (criopreservación ovocitaria) antes de nueva cirugía. EFI intraoperatorio.',tiempoInf:'24',efi:'4',factorMasc:'No estudiado',permTub:'No estudiada',tra:'pres',ciclosFIV:'0',notesFert:'AMH 1.2 ng/mL. Reserva ovárica comprometida. Urgente preservación fertilidad antes de nueva cirugía.',createdAt:'2024-03-01T10:00:00.000Z',updatedAt:'2024-06-20T11:00:00.000Z',historial:[{id:'s4a',fecha:'2024-06-20T11:00:00.000Z',evaD:'7',evaP:'6',hgb:'10.8',amh:'1.1',tamEndo:'38',tamMioma:'35',volUt:'210',txMed:['Agonistas GnRH','Dienogest'],txQx:['Laparoscopía diagnóstica'],respTx:'Parcial (EVA 5–6)',estadoTx:'medico',efi:'4',proxRev:'2025-08-05',nota:'GnRH 3 meses. Endometriomas reducidos. Pendiente miomectomía histeroscópica y criopreservación ovocitaria.'},{id:'s4b',fecha:'2024-04-10T10:00:00.000Z',evaD:'8',evaP:'7',hgb:'10.3',amh:'1.2',tamEndo:'43',tamMioma:'35',volUt:'218',txMed:['Agonistas GnRH','AINEs'],txQx:['Laparoscopía diagnóstica'],respTx:'Escasa (EVA 7–8)',estadoTx:'medico',efi:'',proxRev:'2024-06-20',nota:'Post-laparoscopía diagnóstica. Inicio agonistas GnRH. Derivación centro excelencia.'},{id:'s4c',fecha:'2024-03-01T10:00:00.000Z',evaD:'9',evaP:'7',hgb:'10.1',amh:'1.2',tamEndo:'45',tamMioma:'35',volUt:'220',txMed:['Dienogest','AINEs'],txQx:[],respTx:'Refractaria (EVA 9–10)',estadoTx:'medico',efi:'',proxRev:'2024-04-10',nota:'Primera consulta. Endo IV. Endometrioma bilateral 45/22mm. Mioma submucoso T2. Demora diagnóstica 8 años.'}]},
-  {id:'demo_5',nombre:'Jiménez Torres, Lucía',nhc:'2024-005',fechaNac:'1995-09-12',estadoCivil:'Soltera',telefono:'+34 656 789 012',imc:'22.0',menarquia:'14',paridad:'G0 P0 A0',anticoncepcion:'Progestágenos (oral)',deseoGestacion:'futuro',antFam:[],sintomas:['Dismenorrea','Disuria','Hematuria cíclica'],evaD:'6',evaP:'3',duracion:'6–12 meses',demora:'<1 año',obsSint:'Dismenorrea severa con hematuria cíclica. Ecografía TV normal. RM pendiente.',dx:'sospecha',fechaDx:'2024-05-01',asrm:'',metodoDx:'Diagnóstico empírico',locEndo:[],tamEndo:'',adenomiosis:'',figo:'',numMiomas:'1',tamMioma:'',volUt:'',distorsion:'No',sintMioma:[],hgb:'13.1',amh:'3.8',notesDx:'Imagen negativa. Tratamiento empírico iniciado con progestágenos. Hematuria cíclica sugiere endometriosis vesical. RM pélvica solicitada.',estadoTx:'medico',txMed:['Progestágenos (oral)','AINEs'],txQx:[],respTx:'Parcial (EVA 5–6)',proxRev:'2025-07-15',planTx:'Esperar resultado RM. Si imagen negativa y empírico ineficaz: laparoscopía diagnóstica. Urología para descartar endometriosis vesical.',tiempoInf:'',efi:'',factorMasc:'',permTub:'',tra:'ninguna',ciclosFIV:'0',notesFert:'',createdAt:'2024-05-10T10:00:00.000Z',updatedAt:'2024-05-10T10:00:00.000Z',historial:[{id:'s5a',fecha:'2024-05-10T10:00:00.000Z',evaD:'6',evaP:'3',hgb:'13.1',amh:'3.8',tamEndo:'',tamMioma:'',volUt:'',txMed:['Progestágenos (oral)','AINEs'],txQx:[],respTx:'Parcial (EVA 5–6)',estadoTx:'medico',efi:'',proxRev:'2025-07-15',nota:'Primera visita. Hematuria cíclica. Eco negativa. Inicio empírico. RM solicitada.'}]}
+  {id:'demo_1',nombre:'García Martínez, Carmen',nhc:'2024-001',fechaNac:'1988-03-15',estadoCivil:'Casada',telefono:'+34 612 345 678',imc:'23.4',menarquia:'12',paridad:'G1 P1 A0',anticoncepcion:'ACO combinados',deseoGestacion:'no',antFam:['Endometriosis familiar'],sintomas:['Dismenorrea','Dispareunia profunda','Disquecia','Fatiga crónica'],evaD:'8',evaP:'6',ehp1:'2',ehp2:'3',ehp3:'1',ehp4:'2',ehp5:'2',duracion:'3–5 años',demora:'3–7 años',obsSint:'Dismenorrea incapacitante desde menarquia. Mejora parcial con ACO.',dx:'endometriosis',fechaDx:'2022-06-10',asrm:'III',metodoDx:'Laparoscopía + histología',locEndo:['Endometrioma ovárico','Ligamentos uterosacros','Endometriosis profunda'],tamEndo:'28',adenomiosis:'Focal',figo:'',numMiomas:'1',tamMioma:'',volUt:'',distorsion:'No',sintMioma:[],hgb:'11.8',amh:'1.9',notesDx:'Endometrioma derecho 28mm. Endometriosis profunda USL bilateral confirmada por RM.',estadoTx:'medico',txMed:['DIU-LNG','AINEs'],txQx:['Laparoscopía diagnóstica','Escisión endometriosis'],respTx:'Buena (EVA 3–4)',proxRev:'2026-06-18',planTx:'Mantener DIU-LNG 24 meses. Reevaluar AMH en 6 meses. Si recurrencia dolor: considerar GnRH antagonista.',tiempoInf:'',efi:'',factorMasc:'',permTub:'',tra:'ninguna',ciclosFIV:'0',notesFert:'',createdAt:'2024-01-10T10:00:00.000Z',updatedAt:'2024-06-15T09:30:00.000Z',historial:[{id:'s1a',fecha:'2024-06-15T09:30:00.000Z',evaD:'4',evaP:'3',hgb:'12.1',amh:'1.8',tamEndo:'18',tamMioma:'',volUt:'',txMed:['DIU-LNG','AINEs'],txQx:[],respTx:'Buena (EVA 3–4)',estadoTx:'medico',efi:'',proxRev:'2026-06-18',nota:'Endometrioma reducido a 18mm. Buena tolerancia DIU-LNG. Adenomiosis estable.'},{id:'s1b',fecha:'2024-03-20T10:00:00.000Z',evaD:'6',evaP:'5',hgb:'11.5',amh:'1.9',tamEndo:'24',tamMioma:'',volUt:'',txMed:['DIU-LNG','AINEs'],txQx:[],respTx:'Parcial (EVA 5–6)',estadoTx:'medico',efi:'',proxRev:'2024-06-15',nota:'3 meses post-cirugía. DIU-LNG recién colocado. Dolor mejorando.'},{id:'s1c',fecha:'2024-01-10T10:00:00.000Z',evaD:'8',evaP:'6',hgb:'11.8',amh:'1.9',tamEndo:'28',tamMioma:'',volUt:'',txMed:['AINEs'],txQx:['Laparoscopía diagnóstica','Escisión endometriosis'],respTx:'Escasa (EVA 7–8)',estadoTx:'quirurgico',efi:'',proxRev:'2024-03-20',nota:'Diagnóstico: Endometriosis III. Endometrioma 28mm. Cirugía laparoscópica realizada.'}]},
+  {id:'demo_2',nombre:'López Fernández, Ana',nhc:'2024-002',fechaNac:'1992-07-22',estadoCivil:'Pareja estable',telefono:'+34 623 456 789',imc:'24.1',menarquia:'13',paridad:'G0 P0 A0',anticoncepcion:'Ninguna',deseoGestacion:'si',antFam:[],sintomas:['Dismenorrea','Infertilidad','Dolor pélvico crónico'],evaD:'7',evaP:'5',ehp1:'1',ehp2:'2',ehp3:'1',ehp4:'2',ehp5:'1',duracion:'1–3 años',demora:'1–3 años',obsSint:'Infertilidad primaria 18 meses. Ciclos regulares 28 días.',dx:'endometriosis',fechaDx:'2023-11-20',asrm:'II',metodoDx:'Ecografía TV',locEndo:['Peritoneal superficial','Endometrioma ovárico'],tamEndo:'18',adenomiosis:'No',figo:'',numMiomas:'1',tamMioma:'',volUt:'',distorsion:'No',sintMioma:[],hgb:'12.4',amh:'2.1',notesDx:'Endometrioma izquierdo 18mm. Ecografía TV con signos de endometriosis peritoneal.',estadoTx:'mixto',txMed:['ACO combinados'],txQx:['Quistectomía ovárica'],respTx:'Parcial (EVA 5–6)',proxRev:'2026-06-24',planTx:'Post-quistectomía. Calcular EFI intraoperatorio. Si EFI≥7: intento natural 6 meses. Si EFI<7: FIV directa.',tiempoInf:'18',efi:'6',factorMasc:'Normal',permTub:'Bilateral permeable',tra:'ninguna',ciclosFIV:'0',notesFert:'AMH 2.1. Pareja con seminograma normal. Pendiente laparoscopía diagnóstica-terapéutica.',createdAt:'2024-02-05T11:00:00.000Z',updatedAt:'2024-07-01T08:00:00.000Z',historial:[{id:'s2a',fecha:'2024-07-01T08:00:00.000Z',evaD:'5',evaP:'4',hgb:'12.4',amh:'2.0',tamEndo:'12',tamMioma:'',volUt:'',txMed:[],txQx:['Quistectomía ovárica'],respTx:'Parcial (EVA 5–6)',estadoTx:'mixto',efi:'6',proxRev:'2026-06-24',nota:'Post-quistectomía. EFI calculado=6. Pendiente decisión FIV vs intento natural.'},{id:'s2b',fecha:'2024-04-15T10:00:00.000Z',evaD:'7',evaP:'5',hgb:'12.2',amh:'2.1',tamEndo:'18',tamMioma:'',volUt:'',txMed:['ACO combinados'],txQx:[],respTx:'Parcial (EVA 5–6)',estadoTx:'medico',efi:'',proxRev:'2024-07-01',nota:'Endometrioma 18mm. Se mantiene ACO pre-cirugía. Infertilidad 14 meses.'},{id:'s2c',fecha:'2024-02-05T11:00:00.000Z',evaD:'7',evaP:'5',hgb:'12.5',amh:'2.1',tamEndo:'18',tamMioma:'',volUt:'',txMed:[],txQx:[],respTx:'',estadoTx:'ninguno',efi:'',proxRev:'2024-04-15',nota:'Primera consulta. Eco TV: endometrioma izquierdo 18mm. Infertilidad primaria 12 meses.'}]},
+  {id:'demo_3',nombre:'Rodríguez Sánchez, Elena',nhc:'2024-003',fechaNac:'1985-11-08',estadoCivil:'Casada',telefono:'+34 634 567 890',imc:'27.2',menarquia:'11',paridad:'G2 P2 A0',anticoncepcion:'Ninguna',deseoGestacion:'no',antFam:['Miomas'],sintomas:['Sangrado uterino abundante','Compresión vesical','Anemia','Dolor pélvico'],evaD:'4',evaP:'5',ehp1:'2',ehp2:'1',ehp3:'1',ehp4:'1',ehp5:'2',duracion:'1–3 años',demora:'<1 año',obsSint:'SUA con anemia ferropénica. Hgb 9.2 g/dL. Urgencia urinaria frecuente.',dx:'miomas',fechaDx:'2024-01-08',asrm:'',metodoDx:'',locEndo:[],tamEndo:'',adenomiosis:'Sospecha',figo:'4',numMiomas:'3',tamMioma:'62',volUt:'380',distorsion:'No',sintMioma:['SUA (sangrado abundante)','Compresión vesical','Anemia'],hgb:'9.2',amh:'3.4',notesDx:'3 miomas: FIGO 4 (62mm), FIGO 4 (38mm), FIGO 6 (25mm). Volumen uterino 380cc.',estadoTx:'medico',txMed:['Relugolix (antagonista)','Vitamina D','Ácido tranexámico'],txQx:[],respTx:'Buena (EVA 3–4)',proxRev:'2026-05-20',planTx:'Relugolix 40mg + TAB integrada. Objetivo: recuperar Hgb >12 g/dL en 3 meses, reducir volumen miomático antes de miomectomía laparoscópica.',tiempoInf:'',efi:'',factorMasc:'',permTub:'',tra:'ninguna',ciclosFIV:'0',notesFert:'',createdAt:'2024-01-20T09:00:00.000Z',updatedAt:'2024-05-10T14:00:00.000Z',historial:[{id:'s3a',fecha:'2024-05-10T14:00:00.000Z',evaD:'3',evaP:'3',hgb:'11.4',amh:'3.4',tamEndo:'',tamMioma:'55',volUt:'330',txMed:['Relugolix (antagonista)','Vitamina D'],txQx:[],respTx:'Buena (EVA 3–4)',estadoTx:'medico',efi:'',proxRev:'2026-05-20',nota:'Hgb subiendo: 9.2→10.6→11.4. Mioma mayor 55mm (-7mm). Sangrado casi ausente.'},{id:'s3b',fecha:'2024-03-12T09:00:00.000Z',evaD:'3',evaP:'3',hgb:'10.6',amh:'3.4',tamEndo:'',tamMioma:'60',volUt:'360',txMed:['Relugolix (antagonista)','Vitamina D','Ácido tranexámico'],txQx:[],respTx:'Buena (EVA 3–4)',estadoTx:'medico',efi:'',proxRev:'2024-05-10',nota:'2 meses Relugolix. Hgb 10.6. Sangrado reducido 80%. Bien tolerado.'},{id:'s3c',fecha:'2024-01-20T09:00:00.000Z',evaD:'4',evaP:'5',hgb:'9.2',amh:'3.4',tamEndo:'',tamMioma:'62',volUt:'380',txMed:['Ácido tranexámico'],txQx:[],respTx:'Escasa (EVA 7–8)',estadoTx:'ninguno',efi:'',proxRev:'2024-03-12',nota:'Diagnóstico: 3 miomas FIGO 4. Hgb 9.2 g/dL (anemia moderada-severa). Inicio Relugolix.'}]},
+  {id:'demo_4',nombre:'Martínez Ruiz, Sofia',nhc:'2024-004',fechaNac:'1990-04-30',estadoCivil:'Soltera',telefono:'+34 645 678 901',imc:'21.8',menarquia:'12',paridad:'G0 P0 A0',anticoncepcion:'Implante etonogestrel',deseoGestacion:'futuro',antFam:['Endometriosis familiar','Miomas'],sintomas:['Dismenorrea','Dispareunia profunda','Disquecia','Sangrado uterino abundante','Infertilidad'],evaD:'9',evaP:'7',ehp1:'3',ehp2:'3',ehp3:'2',ehp4:'3',ehp5:'3',duracion:'> 5 años',demora:'> 7 años',obsSint:'Diagnóstico tardío después de 8 años de síntomas. Múltiples consultas previas sin diagnóstico.',dx:'ambas',fechaDx:'2023-09-15',asrm:'IV',metodoDx:'RM pélvica',locEndo:['Endometrioma ovárico','Endometriosis profunda','Tabique rectovaginal','Ligamentos uterosacros','Intestinal'],tamEndo:'45',adenomiosis:'Difusa',figo:'2',numMiomas:'2',tamMioma:'35',volUt:'220',distorsion:'Sí',sintMioma:['SUA (sangrado abundante)','Dolor pélvico'],hgb:'10.1',amh:'1.2',notesDx:'Endometriosis estadio IV con endometrioma bilateral (45mm y 22mm). Mioma submucoso tipo 2 (35mm) con distorsión cavitaria. Adenomiosis difusa. Indicación de centro de excelencia.',estadoTx:'medico',txMed:['Agonistas GnRH','Dienogest','AINEs'],txQx:['Laparoscopía diagnóstica'],respTx:'Parcial (EVA 5–6)',proxRev:'2026-07-03',planTx:'Derivación a centro de excelencia endometriosis. Miomectomía histeroscópica tipo 2 previa. Preservación fertilidad (criopreservación ovocitaria) antes de nueva cirugía. EFI intraoperatorio.',tiempoInf:'24',efi:'4',factorMasc:'No estudiado',permTub:'No estudiada',tra:'pres',ciclosFIV:'0',notesFert:'AMH 1.2 ng/mL. Reserva ovárica comprometida. Urgente preservación fertilidad antes de nueva cirugía.',createdAt:'2024-03-01T10:00:00.000Z',updatedAt:'2024-06-20T11:00:00.000Z',historial:[{id:'s4a',fecha:'2024-06-20T11:00:00.000Z',evaD:'7',evaP:'6',hgb:'10.8',amh:'1.1',tamEndo:'38',tamMioma:'35',volUt:'210',txMed:['Agonistas GnRH','Dienogest'],txQx:['Laparoscopía diagnóstica'],respTx:'Parcial (EVA 5–6)',estadoTx:'medico',efi:'4',proxRev:'2026-07-03',nota:'GnRH 3 meses. Endometriomas reducidos. Pendiente miomectomía histeroscópica y criopreservación ovocitaria.'},{id:'s4b',fecha:'2024-04-10T10:00:00.000Z',evaD:'8',evaP:'7',hgb:'10.3',amh:'1.2',tamEndo:'43',tamMioma:'35',volUt:'218',txMed:['Agonistas GnRH','AINEs'],txQx:['Laparoscopía diagnóstica'],respTx:'Escasa (EVA 7–8)',estadoTx:'medico',efi:'',proxRev:'2024-06-20',nota:'Post-laparoscopía diagnóstica. Inicio agonistas GnRH. Derivación centro excelencia.'},{id:'s4c',fecha:'2024-03-01T10:00:00.000Z',evaD:'9',evaP:'7',hgb:'10.1',amh:'1.2',tamEndo:'45',tamMioma:'35',volUt:'220',txMed:['Dienogest','AINEs'],txQx:[],respTx:'Refractaria (EVA 9–10)',estadoTx:'medico',efi:'',proxRev:'2024-04-10',nota:'Primera consulta. Endo IV. Endometrioma bilateral 45/22mm. Mioma submucoso T2. Demora diagnóstica 8 años.'}]},
+  {id:'demo_5',nombre:'Jiménez Torres, Lucía',nhc:'2024-005',fechaNac:'1995-09-12',estadoCivil:'Soltera',telefono:'+34 656 789 012',imc:'22.0',menarquia:'14',paridad:'G0 P0 A0',anticoncepcion:'Progestágenos (oral)',deseoGestacion:'futuro',antFam:[],sintomas:['Dismenorrea','Disuria','Hematuria cíclica'],evaD:'6',evaP:'3',ehp1:'1',ehp2:'1',ehp3:'0',ehp4:'1',ehp5:'1',duracion:'6–12 meses',demora:'<1 año',obsSint:'Dismenorrea severa con hematuria cíclica. Ecografía TV normal. RM pendiente.',dx:'sospecha',fechaDx:'2024-05-01',asrm:'',metodoDx:'Diagnóstico empírico',locEndo:[],tamEndo:'',adenomiosis:'',figo:'',numMiomas:'1',tamMioma:'',volUt:'',distorsion:'No',sintMioma:[],hgb:'13.1',amh:'3.8',notesDx:'Imagen negativa. Tratamiento empírico iniciado con progestágenos. Hematuria cíclica sugiere endometriosis vesical. RM pélvica solicitada.',estadoTx:'medico',txMed:['Progestágenos (oral)','AINEs'],txQx:[],respTx:'Parcial (EVA 5–6)',proxRev:'2026-06-24',planTx:'Esperar resultado RM. Si imagen negativa y empírico ineficaz: laparoscopía diagnóstica. Urología para descartar endometriosis vesical.',tiempoInf:'',efi:'',factorMasc:'',permTub:'',tra:'ninguna',ciclosFIV:'0',notesFert:'',createdAt:'2024-05-10T10:00:00.000Z',updatedAt:'2024-05-10T10:00:00.000Z',historial:[{id:'s5a',fecha:'2024-05-10T10:00:00.000Z',evaD:'6',evaP:'3',hgb:'13.1',amh:'3.8',tamEndo:'',tamMioma:'',volUt:'',txMed:['Progestágenos (oral)','AINEs'],txQx:[],respTx:'Parcial (EVA 5–6)',estadoTx:'medico',efi:'',proxRev:'2026-06-24',nota:'Primera visita. Hematuria cíclica. Eco negativa. Inicio empírico. RM solicitada.'}]}
 ];
 
 function loadDemo(){
@@ -2001,7 +2563,9 @@ function buildCSVRow(p,sep,cols){
       escCSV(p.estadoCivil),escCSV(p.paridad),escCSV(p.imc),escCSV(p.menarquia),escCSV(p.anticoncepcion),escCSV(p.deseoGestacion));
   }
   if(cols.includes('Síntomas & EVA')){
-    row.push(escCSV(p.sintomas),escCSV(p.evaD||0),escCSV(p.evaP||0),escCSV(p.duracion),escCSV(p.demora));
+    const ehpTotExp=[1,2,3,4,5].reduce((a,i)=>a+(parseInt(p['ehp'+i])||0),0);
+    row.push(escCSV(p.sintomas),escCSV(p.evaD||0),escCSV(p.evaP||0),escCSV(p.duracion),escCSV(p.demora),
+      escCSV(ehpTotExp||''),escCSV(p.ehp1||''),escCSV(p.ehp2||''),escCSV(p.ehp3||''),escCSV(p.ehp4||''),escCSV(p.ehp5||''));
   }
   if(cols.includes('Diagnóstico')){
     row.push(escCSV(p.dx),escCSV(p.fechaDx),escCSV(p.asrm),escCSV(p.metodoDx),
@@ -2024,7 +2588,8 @@ function buildCSVHeader(sep,cols){
   if(cols.includes('Datos personales'))
     h.push('Nombre','NHC','Fecha_Nac','Edad','Estado_Civil','Paridad','IMC','Menarquia','Anticoncepcion','Deseo_Gestacion');
   if(cols.includes('Síntomas & EVA'))
-    h.push('Sintomas','EVA_Dismenorrea','EVA_Dolor_Pelvico','Duracion_Sintomas','Demora_Diagnostica');
+    h.push('Sintomas','EVA_Dismenorrea','EVA_Dolor_Pelvico','Duracion_Sintomas','Demora_Diagnostica',
+      'EHP5_Total','EHP5_Actividad','EHP5_VidaSexual','EHP5_Relaciones','EHP5_Emocional','EHP5_Sueno');
   if(cols.includes('Diagnóstico'))
     h.push('Diagnostico','Fecha_Dx','Estadio_rASRM','Metodo_Dx','Localizacion_Endo','Tam_Endometrioma_mm','Adenomiosis','FIGO_Mioma','Num_Miomas','Tam_Mayor_Mioma_mm','Distorsion_Cavidad');
   if(cols.includes('Tratamiento'))
@@ -2073,7 +2638,9 @@ function expXLSX(){
     const e2=cols.includes('Fertilidad');
     const f=cols.includes('Laboratorio');
     if(a)cells.push(xe(p.nombre),xe(p.nhc),xe(p.fechaNac),xe(p.fechaNac?Math.floor((new Date()-new Date(p.fechaNac))/(365.25*24*3600*1e3)):''),xe(p.estadoCivil),xe(p.paridad),xe(p.imc),xe(p.menarquia),xe(p.anticoncepcion),xe(p.deseoGestacion));
-    if(b)cells.push(xe(p.sintomas),xe(p.evaD||0),xe(p.evaP||0),xe(p.duracion),xe(p.demora));
+    if(b){const ehpTotXl=[1,2,3,4,5].reduce((a,i)=>a+(parseInt(p['ehp'+i])||0),0);
+      cells.push(xe(p.sintomas),xe(p.evaD||0),xe(p.evaP||0),xe(p.duracion),xe(p.demora),
+        xe(ehpTotXl||''),xe(p.ehp1||''),xe(p.ehp2||''),xe(p.ehp3||''),xe(p.ehp4||''),xe(p.ehp5||''));}
     if(c)cells.push(xe(p.dx),xe(p.fechaDx),xe(p.asrm),xe(p.metodoDx),xe(p.locEndo),xe(p.tamEndo),xe(p.adenomiosis),xe(p.figo),xe(p.numMiomas),xe(p.tamMioma),xe(p.distorsion));
     if(d)cells.push(xe(p.estadoTx),xe(p.txMed),xe(p.txQx),xe(p.respTx),xe(p.proxRev));
     if(e2)cells.push(xe(p.tiempoInf),xe(p.efi),xe(p.factorMasc),xe(p.permTub),xe(p.tra),xe(p.ciclosFIV));
@@ -2107,6 +2674,8 @@ function buildStats(){
   const avgAMH=amhs.length?(amhs.reduce((a,b)=>a+b,0)/amhs.length).toFixed(2):'-';
   const evas=DB.map(p=>parseInt(p.evaD)).filter(v=>!isNaN(v));
   const avgEVA=evas.length?(evas.reduce((a,b)=>a+b,0)/evas.length).toFixed(1):'-';
+  const ehps=DB.map(p=>[1,2,3,4,5].reduce((a,i)=>a+(parseInt(p['ehp'+i])||0),0)).filter(v=>v>0);
+  const avgEHP=ehps.length?(ehps.reduce((a,b)=>a+b,0)/ehps.length).toFixed(1):'-';
   const pct=n=>t?Math.round(n/t*100)+'%':'0%';
   const txMedAll=DB.flatMap(p=>p.txMed||[]);
   const txCounts={};txMedAll.forEach(t=>{txCounts[t]=(txCounts[t]||0)+1;});
@@ -2133,6 +2702,7 @@ function buildStats(){
         <tr><th>Variable</th><th>Media</th><th>N válidos</th></tr>
         <tr><td>Edad (años)</td><td>${avgAge}</td><td>${ages.length}</td></tr>
         <tr><td>EVA Dismenorrea</td><td>${avgEVA}/10</td><td>${evas.length}</td></tr>
+        <tr><td>EHP-5 Calidad de vida</td><td>${avgEHP}/15</td><td>${ehps.length}</td></tr>
         <tr><td>Hemoglobina (g/dL)</td><td>${avgHgb}</td><td>${hgbs.length}</td></tr>
         <tr><td>AMH (ng/mL)</td><td>${avgAMH}</td><td>${amhs.length}</td></tr>
       </table>
@@ -2255,7 +2825,19 @@ if(typeof updExpCount==='undefined'){window.updExpCount=function(){
   const el=document.getElementById('expCount');
   if(el)el.textContent=DB.length;
 };}
-uSt();uBdg();cEFI();cBB();uEVA();
+uSt();uBdg();cEFI();cBB();uEVA();cSTEPW();uEHP();
+// Listener delegado: actualizar badges al cambiar cualquier campo del formulario
+(()=>{
+  const fCard=document.querySelector('#s-nueva .card');
+  if(!fCard)return;
+  fCard.addEventListener('input',()=>requestAnimationFrame(uTabBadges));
+  fCard.addEventListener('change',()=>requestAnimationFrame(uTabBadges));
+  // Observar chips del formulario (clicks)
+  fCard.addEventListener('click',e=>{
+    if(e.target.classList.contains('chip'))
+      requestAnimationFrame(uTabBadges);
+  });
+})();
 // Initial chart + alerts render
 setTimeout(()=>{buildDonut&&buildDonut(DB.length,...[DB.filter(p=>p.dx==='endometriosis'||p.dx==='ambas').length,DB.filter(p=>p.dx==='miomas'||p.dx==='ambas').length,DB.filter(p=>p.dx==='ambas').length,DB.filter(p=>p.dx==='sospecha').length]);buildReviewAlerts&&buildReviewAlerts();},100);
 </script>
