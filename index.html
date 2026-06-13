@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<<!DOCTYPE html>
 <html lang="es" data-theme="light">
 <head>
 <meta charset="UTF-8">
@@ -258,7 +258,7 @@ button,a{touch-action:manipulation}
 <body>
 <div id="mov" class="mov" onclick="cls()"></div>
 <aside class="sidebar" id="sb">
-  <div class="slogo"><div class="lico">🌸</div><div class="ltxt"><strong>GineApp Pro</strong><span>ESHRE · SEGO 2025</span></div></div>
+  <div class="slogo"><div class="lico">🌸</div><div class="ltxt"><strong>GinecoApp Pro</strong><span>ESHRE · SEGO 2025</span></div></div>
   <nav>
     <div class="nlbl">Principal</div>
     <button class="nb on" onclick="go('dashboard',this)"><span class="ico">📊</span>Dashboard</button>
@@ -273,7 +273,12 @@ button,a{touch-action:manipulation}
     <button class="nb" onclick="go('guias',this)"><span class="ico">📋</span>Guías 2025</button>
     <button class="nb" onclick="go('informes',this)"><span class="ico">📄</span>Informes</button>
   </nav>
-  <div class="sfoot"><div>ESHRE 2022 · SEGO 2025</div><div class="c3">v2.2 — J.M.F. Carreira — 2026</div></div>
+  <div class="sfoot">
+    <a href="ayuda.html" target="_blank" style="display:flex;align-items:center;gap:7px;padding:7px 8px;border-radius:var(--r2);color:var(--text2);text-decoration:none;font-size:12px;font-weight:500;transition:all .15s;margin-bottom:8px;border:1px solid var(--border2)" onmouseover="this.style.color='var(--pk)';this.style.borderColor='var(--pk)'" onmouseout="this.style.color='var(--text2)';this.style.borderColor='var(--border2)'">
+      <span style="font-size:14px">❓</span>Ayuda &amp; Manual
+    </a>
+    <div>ESHRE 2022 · SEGO 2025</div><div class="c3">v2.1 — J.M.F. Carreira</div>
+  </div>
 </aside>
 <main class="main">
   <header class="topbar">
@@ -1100,7 +1105,8 @@ button,a{touch-action:manipulation}
     <button class="bi" style="padding:12px 4px" onclick="moreGo('scores')"><span class="ic" style="font-size:17px">📏</span>Escalas</button>
     <button class="bi" style="padding:12px 4px" onclick="moreGo('guias')"><span class="ic" style="font-size:17px">📋</span>Guías</button>
     <button class="bi" style="padding:12px 4px;grid-column:span 2" onclick="moreGo('informes')"><span class="ic" style="font-size:17px">📄</span>Informes</button>
-    <button class="bi" style="padding:12px 4px;grid-column:span 2" onclick="toggleTheme();toggleMoreMenu()"><span class="ic" style="font-size:17px" id="themeIcMob">🌙</span>Tema</button>
+    <button class="bi" style="padding:12px 4px;grid-column:span 1" onclick="toggleTheme();toggleMoreMenu()"><span class="ic" style="font-size:17px" id="themeIcMob">🌙</span>Tema</button>
+    <button class="bi" style="padding:12px 4px;grid-column:span 1" onclick="window.open('ayuda.html','_blank');toggleMoreMenu()"><span class="ic" style="font-size:17px">❓</span>Ayuda</button>
   </div>
 </div>
 <div id="moreOverlay" style="display:none;position:fixed;inset:0;z-index:139" onclick="toggleMoreMenu()"></div>
