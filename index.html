@@ -4,7 +4,13 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="GinecoApp">
+<meta name="theme-color" content="#c462a4">
+<meta name="mobile-web-app-capable" content="yes">
 <title>GinecoApp Pro</title>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.svg">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
 [data-theme="dark"]{--bg:#0d0e14;--bg2:#12131a;--bg3:#191a24;--bg4:#1e1f2c;--border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.13);--text:#e6e7f0;--text2:#8a8ca6;--text3:#53556e;--card:#14151e;--card2:#1b1c28;--shadow:0 8px 40px rgba(0,0,0,.55);--inp:#191a24}
@@ -40,6 +46,12 @@ nav{flex:1;padding:10px 7px;overflow-y:auto}
 .sw input{background:none;border:none;outline:none;color:var(--text);font-size:13px;width:100%;font-family:inherit}
 .sw input::placeholder{color:var(--text3)}
 .tbtn{width:34px;height:34px;border-radius:var(--r2);background:var(--bg3);border:1px solid var(--border2);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;transition:all .15s;flex-shrink:0}
+.install-btn{display:none;align-items:center;gap:5px;padding:5px 11px;border-radius:var(--r2);background:linear-gradient(135deg,var(--pk),var(--pu));color:#fff;border:none;cursor:pointer;font-size:12px;font-weight:600;font-family:inherit;white-space:nowrap;transition:all .15s;flex-shrink:0}
+.install-btn:hover{filter:brightness(1.12);transform:translateY(-1px)}
+.install-btn.show{display:flex}
+.pwa-toast{position:fixed;bottom:72px;left:50%;transform:translateX(-50%) translateY(20px);z-index:998;background:linear-gradient(135deg,var(--pk),var(--pu));color:#fff;border-radius:var(--r);padding:12px 16px;font-size:13px;box-shadow:0 8px 32px rgba(196,98,164,.4);display:flex;align-items:center;gap:10px;opacity:0;transition:all .3s;white-space:nowrap;max-width:calc(100vw - 32px)}
+.pwa-toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.pwa-toast button{background:rgba(255,255,255,.25);border:1px solid rgba(255,255,255,.4);color:#fff;border-radius:6px;padding:4px 10px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit}
 .tbtn:hover{background:var(--bg4)}
 /* CONTENT */
 .content{flex:1;padding:18px 18px 72px}
@@ -285,6 +297,7 @@ button,a{touch-action:manipulation}
     <button class="btn bic bg hmenu" onclick="tog()">☰</button>
     <div class="ttl" id="ttl">Dashboard</div>
     <div class="sw"><span style="color:var(--text3);font-size:13px">🔍</span><input id="gs" placeholder="Buscar…" oninput="gSearch(this.value)" onfocus="gSearch(this.value)"></div>
+    <button class="install-btn" id="installBtn" onclick="pwaTriggerInstall()" title="Instalar aplicación">⬇️ Instalar</button>
     <button class="tbtn" id="thbtn" onclick="toggleTheme()" title="Modo claro/oscuro" style="flex-shrink:0">🌙</button>
   </header>
   <div class="content">
@@ -398,51 +411,154 @@ button,a{touch-action:manipulation}
       </div>
       <div class="fg"><label class="fl">Observaciones</label><textarea class="fc" id="fObs" placeholder="Patrón cíclico, factores agravantes…"></textarea></div>
       <hr class="div">
-      <div class="box bi2 mb3"><div class="bt">📋 EHP-5 — Calidad de vida (ESHRE 2022 Rec.38)</div>Impacto de los síntomas en las últimas 4 semanas. 0 = Nunca · 1 = A veces · 2 = Frecuentemente · 3 = Siempre</div>
-      <div class="fr2">
-        <div class="fg">
-          <label class="fl">🏃 Actividad diaria / trabajo</label>
-          <div style="display:flex;align-items:center;gap:10px">
-            <input type="range" id="ehp1" min="0" max="3" value="0" class="fc" style="flex:1" oninput="uEHP()">
-            <span id="ehp1v" style="min-width:18px;font-weight:700;color:var(--pk)">0</span>
+      <!-- EHP header + toggle -->
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:10px">
+        <div class="box bi2" style="flex:1;min-width:0;margin-bottom:0">
+          <div class="bt" id="ehpBoxTitle">📋 EHP-5 — Calidad de vida (ESHRE 2022 Rec.38)</div>
+          <span id="ehpBoxDesc">Evaluación rápida: 5 dominios · Score 0–15. 0 = Nunca · 1 = A veces · 2 = Frecuentemente · 3 = Siempre</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:7px;flex-shrink:0">
+          <span class="xs c2">EHP-5</span>
+          <div id="ehpToggleWrap" onclick="toggleEHP30()" style="width:42px;height:22px;border-radius:99px;background:var(--border2);cursor:pointer;position:relative;transition:background .2s;flex-shrink:0" title="Activar EHP-30 completo">
+            <div id="ehpToggleKnob" style="width:18px;height:18px;border-radius:50%;background:#fff;position:absolute;top:2px;left:2px;transition:left .2s;box-shadow:0 1px 3px rgba(0,0,0,.3)"></div>
+          </div>
+          <span class="xs c2">EHP-30</span>
+        </div>
+      </div>
+
+      <!-- EHP-5 (por defecto visible) -->
+      <div id="ehp5Block">
+        <div class="fr2">
+          <div class="fg">
+            <label class="fl">🏃 Actividad diaria / trabajo</label>
+            <div style="display:flex;align-items:center;gap:10px">
+              <input type="range" id="ehp1" min="0" max="3" value="0" class="fc" style="flex:1" oninput="uEHP()">
+              <span id="ehp1v" style="min-width:18px;font-weight:700;color:var(--pk)">0</span>
+            </div>
+          </div>
+          <div class="fg">
+            <label class="fl">❤️ Vida sexual</label>
+            <div style="display:flex;align-items:center;gap:10px">
+              <input type="range" id="ehp2" min="0" max="3" value="0" class="fc" style="flex:1" oninput="uEHP()">
+              <span id="ehp2v" style="min-width:18px;font-weight:700;color:var(--pk)">0</span>
+            </div>
+          </div>
+          <div class="fg">
+            <label class="fl">👥 Relaciones sociales / familia</label>
+            <div style="display:flex;align-items:center;gap:10px">
+              <input type="range" id="ehp3" min="0" max="3" value="0" class="fc" style="flex:1" oninput="uEHP()">
+              <span id="ehp3v" style="min-width:18px;font-weight:700;color:var(--pk)">0</span>
+            </div>
+          </div>
+          <div class="fg">
+            <label class="fl">🧠 Bienestar emocional</label>
+            <div style="display:flex;align-items:center;gap:10px">
+              <input type="range" id="ehp4" min="0" max="3" value="0" class="fc" style="flex:1" oninput="uEHP()">
+              <span id="ehp4v" style="min-width:18px;font-weight:700;color:var(--pk)">0</span>
+            </div>
+          </div>
+          <div class="fg">
+            <label class="fl">😴 Sueño y energía</label>
+            <div style="display:flex;align-items:center;gap:10px">
+              <input type="range" id="ehp5" min="0" max="3" value="0" class="fc" style="flex:1" oninput="uEHP()">
+              <span id="ehp5v" style="min-width:18px;font-weight:700;color:var(--pk)">0</span>
+            </div>
+          </div>
+          <div class="fg" style="display:flex;align-items:center;gap:12px;padding:10px 12px;background:var(--bg3);border-radius:var(--r2);border:1px solid var(--border2)">
+            <div class="scr" id="ehpR" style="border-color:var(--gr);width:52px;height:52px;flex-shrink:0">
+              <div class="sn" id="ehpN" style="color:var(--gr);font-size:16px">0</div>
+              <div class="sl2" id="ehpDen">/ 15</div>
+            </div>
+            <div>
+              <div id="ehpLbl" class="f6 sm" style="color:var(--gr)">Sin impacto</div>
+              <div id="ehpSub" class="xs c2">Calidad de vida no afectada</div>
+            </div>
           </div>
         </div>
-        <div class="fg">
-          <label class="fl">❤️ Vida sexual</label>
-          <div style="display:flex;align-items:center;gap:10px">
-            <input type="range" id="ehp2" min="0" max="3" value="0" class="fc" style="flex:1" oninput="uEHP()">
-            <span id="ehp2v" style="min-width:18px;font-weight:700;color:var(--pk)">0</span>
+      </div>
+
+      <!-- EHP-30 (oculto por defecto) -->
+      <div id="ehp30Block" style="display:none">
+        <div class="box bi2 mb3" style="font-size:11.5px">
+          <strong>Instrucciones:</strong> Indica con qué frecuencia, en las últimas 4 semanas, cada situación ha afectado tu vida.
+          0 = Nunca · 1 = Raramente · 2 = A veces · 3 = Frecuentemente · 4 = Siempre
+        </div>
+        <!-- Dominio 1: Dolor -->
+        <div style="border-left:3px solid var(--pk);padding-left:11px;margin-bottom:14px">
+          <div class="xs f6 cp mb2" style="text-transform:uppercase;letter-spacing:.8px">🏃 Dominio 1 — Dolor e impacto físico</div>
+          <div class="fr2" id="ehp30d1">
+            <div class="fg"><label class="fl" style="font-size:11px">1. El dolor me ha impedido realizar mis actividades cotidianas</label><div style="display:flex;align-items:center;gap:8px"><input type="range" id="e30_1" min="0" max="4" value="0" class="fc" style="flex:1" oninput="uEHP30()"><span id="e30_1v" style="min-width:14px;font-weight:700;color:var(--pk);font-size:12px">0</span></div></div>
+            <div class="fg"><label class="fl" style="font-size:11px">2. Me he sentido incapaz de planificar actividades por el dolor</label><div style="display:flex;align-items:center;gap:8px"><input type="range" id="e30_2" min="0" max="4" value="0" class="fc" style="flex:1" oninput="uEHP30()"><span id="e30_2v" style="min-width:14px;font-weight:700;color:var(--pk);font-size:12px">0</span></div></div>
+            <div class="fg"><label class="fl" style="font-size:11px">3. El dolor me ha despertado por la noche</label><div style="display:flex;align-items:center;gap:8px"><input type="range" id="e30_3" min="0" max="4" value="0" class="fc" style="flex:1" oninput="uEHP30()"><span id="e30_3v" style="min-width:14px;font-weight:700;color:var(--pk);font-size:12px">0</span></div></div>
+            <div class="fg"><label class="fl" style="font-size:11px">4. He tenido dolor al orinar</label><div style="display:flex;align-items:center;gap:8px"><input type="range" id="e30_4" min="0" max="4" value="0" class="fc" style="flex:1" oninput="uEHP30()"><span id="e30_4v" style="min-width:14px;font-weight:700;color:var(--pk);font-size:12px">0</span></div></div>
+            <div class="fg"><label class="fl" style="font-size:11px">5. He tenido dolor al defecar</label><div style="display:flex;align-items:center;gap:8px"><input type="range" id="e30_5" min="0" max="4" value="0" class="fc" style="flex:1" oninput="uEHP30()"><span id="e30_5v" style="min-width:14px;font-weight:700;color:var(--pk);font-size:12px">0</span></div></div>
+            <div class="fg"><label class="fl" style="font-size:11px">6. He tenido dolor durante o después de las relaciones sexuales</label><div style="display:flex;align-items:center;gap:8px"><input type="range" id="e30_6" min="0" max="4" value="0" class="fc" style="flex:1" oninput="uEHP30()"><span id="e30_6v" style="min-width:14px;font-weight:700;color:var(--pk);font-size:12px">0</span></div></div>
           </div>
         </div>
-        <div class="fg">
-          <label class="fl">👥 Relaciones sociales / familia</label>
-          <div style="display:flex;align-items:center;gap:10px">
-            <input type="range" id="ehp3" min="0" max="3" value="0" class="fc" style="flex:1" oninput="uEHP()">
-            <span id="ehp3v" style="min-width:18px;font-weight:700;color:var(--pk)">0</span>
+        <!-- Dominio 2: Bienestar emocional -->
+        <div style="border-left:3px solid var(--pu);padding-left:11px;margin-bottom:14px">
+          <div class="xs f6 cpu mb2" style="text-transform:uppercase;letter-spacing:.8px">🧠 Dominio 2 — Bienestar emocional</div>
+          <div class="fr2">
+            <div class="fg"><label class="fl" style="font-size:11px">7. Me he sentido deprimida o triste</label><div style="display:flex;align-items:center;gap:8px"><input type="range" id="e30_7" min="0" max="4" value="0" class="fc" style="flex:1" oninput="uEHP30()"><span id="e30_7v" style="min-width:14px;font-weight:700;color:var(--pu);font-size:12px">0</span></div></div>
+            <div class="fg"><label class="fl" style="font-size:11px">8. Me he sentido ansiosa o con preocupaciones</label><div style="display:flex;align-items:center;gap:8px"><input type="range" id="e30_8" min="0" max="4" value="0" class="fc" style="flex:1" oninput="uEHP30()"><span id="e30_8v" style="min-width:14px;font-weight:700;color:var(--pu);font-size:12px">0</span></div></div>
+            <div class="fg"><label class="fl" style="font-size:11px">9. Me he sentido irritable o de mal humor</label><div style="display:flex;align-items:center;gap:8px"><input type="range" id="e30_9" min="0" max="4" value="0" class="fc" style="flex:1" oninput="uEHP30()"><span id="e30_9v" style="min-width:14px;font-weight:700;color:var(--pu);font-size:12px">0</span></div></div>
+            <div class="fg"><label class="fl" style="font-size:11px">10. He llorado con frecuencia</label><div style="display:flex;align-items:center;gap:8px"><input type="range" id="e30_10" min="0" max="4" value="0" class="fc" style="flex:1" oninput="uEHP30()"><span id="e30_10v" style="min-width:14px;font-weight:700;color:var(--pu);font-size:12px">0</span></div></div>
+            <div class="fg"><label class="fl" style="font-size:11px">11. He sentido que la enfermedad domina mi vida</label><div style="display:flex;align-items:center;gap:8px"><input type="range" id="e30_11" min="0" max="4" value="0" class="fc" style="flex:1" oninput="uEHP30()"><span id="e30_11v" style="min-width:14px;font-weight:700;color:var(--pu);font-size:12px">0</span></div></div>
+            <div class="fg"><label class="fl" style="font-size:11px">12. Me he sentido sin esperanza respecto al futuro</label><div style="display:flex;align-items:center;gap:8px"><input type="range" id="e30_12" min="0" max="4" value="0" class="fc" style="flex:1" oninput="uEHP30()"><span id="e30_12v" style="min-width:14px;font-weight:700;color:var(--pu);font-size:12px">0</span></div></div>
           </div>
         </div>
-        <div class="fg">
-          <label class="fl">🧠 Bienestar emocional</label>
-          <div style="display:flex;align-items:center;gap:10px">
-            <input type="range" id="ehp4" min="0" max="3" value="0" class="fc" style="flex:1" oninput="uEHP()">
-            <span id="ehp4v" style="min-width:18px;font-weight:700;color:var(--pk)">0</span>
+        <!-- Dominio 3: Relaciones sociales -->
+        <div style="border-left:3px solid var(--gr);padding-left:11px;margin-bottom:14px">
+          <div class="xs f6 cg mb2" style="text-transform:uppercase;letter-spacing:.8px">👥 Dominio 3 — Relaciones sociales y apoyo</div>
+          <div class="fr2">
+            <div class="fg"><label class="fl" style="font-size:11px">13. La enfermedad ha afectado mis relaciones personales</label><div style="display:flex;align-items:center;gap:8px"><input type="range" id="e30_13" min="0" max="4" value="0" class="fc" style="flex:1" oninput="uEHP30()"><span id="e30_13v" style="min-width:14px;font-weight:700;color:var(--gr);font-size:12px">0</span></div></div>
+            <div class="fg"><label class="fl" style="font-size:11px">14. He evitado actividades sociales por los síntomas</label><div style="display:flex;align-items:center;gap:8px"><input type="range" id="e30_14" min="0" max="4" value="0" class="fc" style="flex:1" oninput="uEHP30()"><span id="e30_14v" style="min-width:14px;font-weight:700;color:var(--gr);font-size:12px">0</span></div></div>
+            <div class="fg"><label class="fl" style="font-size:11px">15. Me he sentido sola en mi situación</label><div style="display:flex;align-items:center;gap:8px"><input type="range" id="e30_15" min="0" max="4" value="0" class="fc" style="flex:1" oninput="uEHP30()"><span id="e30_15v" style="min-width:14px;font-weight:700;color:var(--gr);font-size:12px">0</span></div></div>
+            <div class="fg"><label class="fl" style="font-size:11px">16. He sentido que otros no comprenden mi enfermedad</label><div style="display:flex;align-items:center;gap:8px"><input type="range" id="e30_16" min="0" max="4" value="0" class="fc" style="flex:1" oninput="uEHP30()"><span id="e30_16v" style="min-width:14px;font-weight:700;color:var(--gr);font-size:12px">0</span></div></div>
+            <div class="fg"><label class="fl" style="font-size:11px">17. La endometriosis ha afectado mi relación de pareja</label><div style="display:flex;align-items:center;gap:8px"><input type="range" id="e30_17" min="0" max="4" value="0" class="fc" style="flex:1" oninput="uEHP30()"><span id="e30_17v" style="min-width:14px;font-weight:700;color:var(--gr);font-size:12px">0</span></div></div>
+            <div class="fg"><label class="fl" style="font-size:11px">18. He necesitado apoyo de personas cercanas por los síntomas</label><div style="display:flex;align-items:center;gap:8px"><input type="range" id="e30_18" min="0" max="4" value="0" class="fc" style="flex:1" oninput="uEHP30()"><span id="e30_18v" style="min-width:14px;font-weight:700;color:var(--gr);font-size:12px">0</span></div></div>
           </div>
         </div>
-        <div class="fg">
-          <label class="fl">😴 Sueño y energía</label>
-          <div style="display:flex;align-items:center;gap:10px">
-            <input type="range" id="ehp5" min="0" max="3" value="0" class="fc" style="flex:1" oninput="uEHP()">
-            <span id="ehp5v" style="min-width:18px;font-weight:700;color:var(--pk)">0</span>
+        <!-- Dominio 4: Autoestima / imagen corporal -->
+        <div style="border-left:3px solid var(--or);padding-left:11px;margin-bottom:14px">
+          <div class="xs f6 co mb2" style="text-transform:uppercase;letter-spacing:.8px">💛 Dominio 4 — Autoestima e imagen corporal</div>
+          <div class="fr2">
+            <div class="fg"><label class="fl" style="font-size:11px">19. Me he sentido menos atractiva por la enfermedad</label><div style="display:flex;align-items:center;gap:8px"><input type="range" id="e30_19" min="0" max="4" value="0" class="fc" style="flex:1" oninput="uEHP30()"><span id="e30_19v" style="min-width:14px;font-weight:700;color:var(--or);font-size:12px">0</span></div></div>
+            <div class="fg"><label class="fl" style="font-size:11px">20. Me he sentido menos femenina o menos yo misma</label><div style="display:flex;align-items:center;gap:8px"><input type="range" id="e30_20" min="0" max="4" value="0" class="fc" style="flex:1" oninput="uEHP30()"><span id="e30_20v" style="min-width:14px;font-weight:700;color:var(--or);font-size:12px">0</span></div></div>
+            <div class="fg"><label class="fl" style="font-size:11px">21. Me he sentido avergonzada por mi situación de salud</label><div style="display:flex;align-items:center;gap:8px"><input type="range" id="e30_21" min="0" max="4" value="0" class="fc" style="flex:1" oninput="uEHP30()"><span id="e30_21v" style="min-width:14px;font-weight:700;color:var(--or);font-size:12px">0</span></div></div>
+            <div class="fg"><label class="fl" style="font-size:11px">22. He tenido baja autoestima por la enfermedad</label><div style="display:flex;align-items:center;gap:8px"><input type="range" id="e30_22" min="0" max="4" value="0" class="fc" style="flex:1" oninput="uEHP30()"><span id="e30_22v" style="min-width:14px;font-weight:700;color:var(--or);font-size:12px">0</span></div></div>
+            <div class="fg"><label class="fl" style="font-size:11px">23. He sentido que mi cuerpo me ha fallado</label><div style="display:flex;align-items:center;gap:8px"><input type="range" id="e30_23" min="0" max="4" value="0" class="fc" style="flex:1" oninput="uEHP30()"><span id="e30_23v" style="min-width:14px;font-weight:700;color:var(--or);font-size:12px">0</span></div></div>
+            <div class="fg"><label class="fl" style="font-size:11px">24. Me ha preocupado el impacto de la enfermedad en el futuro</label><div style="display:flex;align-items:center;gap:8px"><input type="range" id="e30_24" min="0" max="4" value="0" class="fc" style="flex:1" oninput="uEHP30()"><span id="e30_24v" style="min-width:14px;font-weight:700;color:var(--or);font-size:12px">0</span></div></div>
           </div>
         </div>
-        <div class="fg" style="display:flex;align-items:center;gap:12px;padding:10px 12px;background:var(--bg3);border-radius:var(--r2);border:1px solid var(--border2)">
-          <div class="scr" id="ehpR" style="border-color:var(--gr);width:52px;height:52px;flex-shrink:0">
-            <div class="sn" id="ehpN" style="color:var(--gr);font-size:16px">0</div>
-            <div class="sl2">/ 15</div>
+        <!-- Dominio 5: Trabajo y vida diaria -->
+        <div style="border-left:3px solid var(--text2);padding-left:11px;margin-bottom:14px">
+          <div class="xs f6 mb2" style="text-transform:uppercase;letter-spacing:.8px;color:var(--text2)">💼 Dominio 5 — Trabajo y vida cotidiana</div>
+          <div class="fr2">
+            <div class="fg"><label class="fl" style="font-size:11px">25. He tenido que reducir mis horas de trabajo o estudio</label><div style="display:flex;align-items:center;gap:8px"><input type="range" id="e30_25" min="0" max="4" value="0" class="fc" style="flex:1" oninput="uEHP30()"><span id="e30_25v" style="min-width:14px;font-weight:700;color:var(--text2);font-size:12px">0</span></div></div>
+            <div class="fg"><label class="fl" style="font-size:11px">26. He faltado al trabajo o al estudio por los síntomas</label><div style="display:flex;align-items:center;gap:8px"><input type="range" id="e30_26" min="0" max="4" value="0" class="fc" style="flex:1" oninput="uEHP30()"><span id="e30_26v" style="min-width:14px;font-weight:700;color:var(--text2);font-size:12px">0</span></div></div>
+            <div class="fg"><label class="fl" style="font-size:11px">27. Me ha resultado difícil concentrarme en el trabajo</label><div style="display:flex;align-items:center;gap:8px"><input type="range" id="e30_27" min="0" max="4" value="0" class="fc" style="flex:1" oninput="uEHP30()"><span id="e30_27v" style="min-width:14px;font-weight:700;color:var(--text2);font-size:12px">0</span></div></div>
+            <div class="fg"><label class="fl" style="font-size:11px">28. La enfermedad ha afectado mi rendimiento laboral o académico</label><div style="display:flex;align-items:center;gap:8px"><input type="range" id="e30_28" min="0" max="4" value="0" class="fc" style="flex:1" oninput="uEHP30()"><span id="e30_28v" style="min-width:14px;font-weight:700;color:var(--text2);font-size:12px">0</span></div></div>
+            <div class="fg"><label class="fl" style="font-size:11px">29. He necesitado ayuda de terceros para las tareas domésticas</label><div style="display:flex;align-items:center;gap:8px"><input type="range" id="e30_29" min="0" max="4" value="0" class="fc" style="flex:1" oninput="uEHP30()"><span id="e30_29v" style="min-width:14px;font-weight:700;color:var(--text2);font-size:12px">0</span></div></div>
+            <div class="fg"><label class="fl" style="font-size:11px">30. Los síntomas han limitado mis actividades de ocio y tiempo libre</label><div style="display:flex;align-items:center;gap:8px"><input type="range" id="e30_30" min="0" max="4" value="0" class="fc" style="flex:1" oninput="uEHP30()"><span id="e30_30v" style="min-width:14px;font-weight:700;color:var(--text2);font-size:12px">0</span></div></div>
           </div>
-          <div>
-            <div id="ehpLbl" class="f6 sm" style="color:var(--gr)">Sin impacto</div>
-            <div id="ehpSub" class="xs c2">Calidad de vida no afectada</div>
+        </div>
+        <!-- Resultado EHP-30 -->
+        <div style="display:flex;align-items:center;gap:14px;padding:12px 14px;background:var(--bg3);border-radius:var(--r2);border:1px solid var(--border2);flex-wrap:wrap">
+          <div class="scr" id="ehp30R" style="border-color:var(--gr);width:60px;height:60px;flex-shrink:0">
+            <div class="sn" id="ehp30N" style="color:var(--gr);font-size:16px">0</div>
+            <div class="sl2">/ 120</div>
+          </div>
+          <div style="flex:1;min-width:120px">
+            <div id="ehp30Lbl" class="f6 sm" style="color:var(--gr)">Sin impacto significativo</div>
+            <div id="ehp30Sub" class="xs c2">Calidad de vida no afectada</div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px 12px;font-size:11px">
+            <div class="c3">D1 Dolor: <strong id="ehp30s1" style="color:var(--pk)">0</strong>/24</div>
+            <div class="c3">D2 Emocional: <strong id="ehp30s2" style="color:var(--pu)">0</strong>/24</div>
+            <div class="c3">D3 Social: <strong id="ehp30s3" style="color:var(--gr)">0</strong>/24</div>
+            <div class="c3">D4 Autoestima: <strong id="ehp30s4" style="color:var(--or)">0</strong>/24</div>
+            <div class="c3" style="grid-column:span 2">D5 Trabajo: <strong id="ehp30s5" style="color:var(--text2)">0</strong>/24</div>
           </div>
         </div>
       </div>
@@ -1447,6 +1563,10 @@ function clr(){
     const v=document.getElementById('ehp'+i+'v');if(v)v.textContent=0;
   });
   uEHP();
+  // Reset EHP-30
+  for(let i=1;i<=30;i++){const el=document.getElementById('e30_'+i);if(el)el.value=0;const lbl=document.getElementById('e30_'+i+'v');if(lbl)lbl.textContent=0;}
+  // Reset toggle a EHP-5
+  if(_ehp30Active){toggleEHP30();}
   udF();fTab(0,null);
   setTimeout(uTabBadges,0);
 }
@@ -1471,6 +1591,8 @@ function gD(){
     ehp3:document.getElementById('ehp3').value,
     ehp4:document.getElementById('ehp4').value,
     ehp5:document.getElementById('ehp5').value,
+    ehpMode:_ehp30Active?'30':'5',
+    ehp30:(()=>{const v={};for(let i=1;i<=30;i++){const el=document.getElementById('e30_'+i);v['e'+i]=el?parseInt(el.value)||0:0;}return v;})(),
     duracion:document.getElementById('fDur').value,
     demora:document.getElementById('fDem').value,
     obsSint:document.getElementById('fObs').value,
@@ -1523,6 +1645,19 @@ function fillF(p){
     const lbl=document.getElementById('ehp'+i+'v');if(lbl)lbl.textContent=v;
   });
   uEHP();
+  // Restaurar EHP-30 si la paciente lo usó
+  if(p.ehpMode==='30'&&p.ehp30){
+    if(!_ehp30Active)toggleEHP30();
+    for(let i=1;i<=30;i++){
+      const el=document.getElementById('e30_'+i);
+      if(el)el.value=p.ehp30['e'+i]||0;
+      const lbl=document.getElementById('e30_'+i+'v');
+      if(lbl)lbl.textContent=p.ehp30['e'+i]||0;
+    }
+    uEHP30();
+  } else {
+    if(_ehp30Active)toggleEHP30();
+  }
   s('fDur',p.duracion);s('fDem',p.demora);s('fObs',p.obsSint);
   s('fDx',p.dx);udF();s('fFDx',p.fechaDx);
   s('fAS',p.asrm);s('fMD',p.metodoDx);
@@ -1656,13 +1791,14 @@ function mkSnap(p){
     respTx:p.respTx, estadoTx:p.estadoTx,
     efi:p.efi, proxRev:p.proxRev,
     ehp1:p.ehp1,ehp2:p.ehp2,ehp3:p.ehp3,ehp4:p.ehp4,ehp5:p.ehp5,
+    ehpMode:p.ehpMode||'5',ehp30:p.ehp30?{...p.ehp30}:null,
     nota:p.planTx||''
   };
 }
 
 // Detecta cambio clínico relevante entre dos versiones
 function hasClinicChange(prev,next){
-  const fields=['evaD','evaP','hgb','amh','tamEndo','tamMioma','volUt','respTx','estadoTx','efi','ehp1','ehp2','ehp3','ehp4','ehp5'];
+  const fields=['evaD','evaP','hgb','amh','tamEndo','tamMioma','volUt','respTx','estadoTx','efi','ehp1','ehp2','ehp3','ehp4','ehp5','ehpMode'];
   if(fields.some(f=>String(prev[f]||'')!==String(next[f]||'')))return true;
   const arrDiff=(a,b)=>JSON.stringify([...(a||[])].sort())!==JSON.stringify([...(b||[])].sort());
   return arrDiff(prev.txMed,next.txMed)||arrDiff(prev.txQx,next.txQx);
@@ -1670,6 +1806,8 @@ function hasClinicChange(prev,next){
 function ePt(){const p=DB.find(p=>p.id===cId);if(!p)return;fillF(p);cM();go('nueva',document.querySelectorAll('.nb')[2]);}
 async function dPt(){
   if(!confirm('¿Eliminar esta paciente? No se puede deshacer.'))return;
+  // Limpiar adjuntos antes de eliminar el registro principal
+  try{await idb.clearAdjuntosByPaciente(cId);}catch(e){console.error('Error limpiando adjuntos:',e);}
   DB=DB.filter(p=>p.id!==cId);
   try{await idb.del(cId);}catch(e){console.error('IDB del error:',e);}
   cM();rPL();uiRefresh();tst('Paciente eliminada','er');
@@ -1717,13 +1855,19 @@ function eById(id){const p=DB.find(x=>x.id===id);if(!p)return;fillF(p);go('nueva
 // ═══════════════════════════════════════════════
 // PATIENT MODAL
 // ═══════════════════════════════════════════════
-function vPt(id){
+async function vPt(id){
   const p=DB.find(x=>x.id===id);if(!p)return;
   cId=id;
   document.getElementById('mPN').textContent=p.nombre;
   document.getElementById('mPB').innerHTML=bCard(p);
   oM();
   setTimeout(()=>buildCtxPanel(p),0);
+  // Cargar adjuntos de forma asíncrona tras renderizar el modal
+  try{
+    const adjs=await idb.getAdjuntos(id);
+    const el=document.getElementById('adjList_'+id);
+    if(el)el.innerHTML=renderAdjuntos(adjs,id);
+  }catch(e){console.error('Error cargando adjuntos:',e);}
 }
 function bCard(p){
   // Check upcoming review
@@ -1752,7 +1896,7 @@ function bCard(p){
       <div class="xs c3 f6 mb2" style="text-transform:uppercase;letter-spacing:.8px">Síntomas</div>
       <div style="display:flex;flex-wrap:wrap;gap:4px">${p.sintomas.map(s=>`<span class="tag tp">${s}</span>`).join('')}</div>
       ${+p.evaD>0?`<div class="xs c2 mt2u">EVA Dismenorrea: <strong>${p.evaD}/10</strong> · EVA Dolor: <strong>${p.evaP}/10</strong>${p.duracion?' · '+p.duracion:''}</div>`:''}
-      ${(()=>{const ehpT=[1,2,3,4,5].reduce((a,i)=>a+(parseInt(p['ehp'+i])||0),0);if(!ehpT)return'';const col=ehpT<=3?'var(--gr)':ehpT<=7?'var(--or)':'var(--rd)';const lbl=ehpT<=3?'Sin impacto':ehpT<=7?'Impacto moderado':ehpT<=11?'Impacto severo':'Impacto muy severo';return`<div class="xs c2 mt2u" style="display:flex;align-items:center;gap:6px"><span style="font-weight:700;color:${col}">EHP-5: ${ehpT}/15</span><span style="color:${col}">${lbl}</span></div>`;})()}
+      ${(()=>{let ehpT=0,ehpMax=15,ehpVer='EHP-5';if(p.ehpMode==='30'&&p.ehp30){for(let i=1;i<=30;i++)ehpT+=(parseInt(p.ehp30['e'+i])||0);ehpMax=120;ehpVer='EHP-30';}else{ehpT=[1,2,3,4,5].reduce((a,i)=>a+(parseInt(p['ehp'+i])||0),0);}if(!ehpT)return'';const pct=ehpT/ehpMax;const col=pct<=0.2?'var(--gr)':pct<=0.5?'var(--or)':'var(--rd)';const lbl=pct<=0.2?'Sin impacto':pct<=0.5?'Impacto moderado':pct<=0.75?'Impacto severo':'Impacto muy severo';return`<div class="xs c2 mt2u" style="display:flex;align-items:center;gap:6px"><span style="font-weight:700;color:${col}">${ehpVer}: ${ehpT}/${ehpMax}</span><span style="color:${col}">${lbl}</span></div>`;})()}
     </div>`:''}
   ${p.dx==='endometriosis'||p.dx==='ambas'?`
     <div style="border-left:3px solid var(--pk);padding-left:10px;margin-bottom:12px">
@@ -1791,9 +1935,109 @@ function bCard(p){
   ${p.planTx?`<div class="box bi2 mb3"><div class="bt">📋 Plan terapéutico</div><div class="sm">${p.planTx}</div></div>`:''}
   ${revAlert}
   ${(p.historial&&p.historial.length>1)?buildHistorialHTML(p):''}
+  <div style="border:1px solid var(--border2);border-radius:var(--r2);overflow:hidden;margin-top:14px">
+    <div style="background:var(--bg3);padding:8px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:8px">
+      <div style="display:flex;align-items:center;gap:7px">
+        <div style="font-size:11.5px;font-weight:700;color:var(--text2)">📎 DOCUMENTOS</div>
+        <div class="xs c3">imágenes y PDFs adjuntos</div>
+      </div>
+      <label style="display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:var(--r2);background:var(--pk);color:#fff;font-size:11.5px;font-weight:600;cursor:pointer;transition:filter .15s" onmouseover="this.style.filter='brightness(1.1)'" onmouseout="this.style.filter=''">
+        + Adjuntar
+        <input type="file" id="adjInput_${p.id}" accept="application/pdf,image/*" multiple style="display:none" onchange="uploadAdjuntos(this,'${p.id}')">
+      </label>
+    </div>
+    <div id="adjList_${p.id}" style="padding:8px 12px">
+      <div class="xs c3" style="padding:6px 0;text-align:center">Cargando documentos…</div>
+    </div>
+  </div>
   <div id="ctxPanel" style="margin-top:14px"></div>
   <div class="xs c3" style="margin-top:12px;padding-top:8px;border-top:1px solid var(--border)">📅 Registrado: ${created}${updated}</div>`;
 }
+// ═══════════════════════════════════════════════
+// ADJUNTOS CLÍNICOS
+// ═══════════════════════════════════════════════
+function fmtSize(bytes){
+  if(bytes<1024)return bytes+'B';
+  if(bytes<1024*1024)return(bytes/1024).toFixed(1)+'KB';
+  return(bytes/1024/1024).toFixed(1)+'MB';
+}
+
+async function uploadAdjuntos(inputEl,pacienteId){
+  const files=[...inputEl.files];
+  if(!files.length)return;
+  let subidos=0;
+  for(const file of files){
+    if(file.size>10*1024*1024){
+      tst(`${file.name.slice(0,28)}… supera 10 MB — omitido`,'er');
+      continue;
+    }
+    const adj={
+      id:gid(),
+      pacienteId,
+      nombre:file.name,
+      tipo:file.type,
+      tamaño:file.size,
+      fecha:new Date().toISOString(),
+      blob:file
+    };
+    try{
+      await idb.putAdjunto(adj);
+      subidos++;
+    }catch(e){
+      console.error('Error guardando adjunto:',e);
+      tst('Error al guardar '+file.name,'er');
+    }
+  }
+  inputEl.value='';
+  if(subidos>0){
+    const adjs=await idb.getAdjuntos(pacienteId);
+    const el=document.getElementById('adjList_'+pacienteId);
+    if(el)el.innerHTML=renderAdjuntos(adjs,pacienteId);
+    tst(subidos===1?'Documento adjuntado ✓':`${subidos} documentos adjuntados ✓`,'ok');
+  }
+}
+
+async function deleteAdjunto(adjId,pacienteId){
+  if(!confirm('¿Eliminar este documento adjunto?'))return;
+  try{
+    await idb.delAdjunto(adjId);
+    const adjs=await idb.getAdjuntos(pacienteId);
+    const el=document.getElementById('adjList_'+pacienteId);
+    if(el)el.innerHTML=renderAdjuntos(adjs,pacienteId);
+    tst('Documento eliminado','er');
+  }catch(e){
+    console.error('Error eliminando adjunto:',e);
+    tst('Error al eliminar','er');
+  }
+}
+
+function renderAdjuntos(adjs,pacienteId){
+  if(!adjs||!adjs.length){
+    return'<div class="xs c3" style="padding:8px 0;text-align:center">Sin documentos adjuntos · Usa «+ Adjuntar» para añadir imágenes o PDFs</div>';
+  }
+  return adjs.map(adj=>{
+    const esPDF=adj.tipo==='application/pdf';
+    const esImg=adj.tipo.startsWith('image/');
+    const ico=esPDF?'📄':'🖼️';
+    const nombre=adj.nombre.length>34?adj.nombre.slice(0,31)+'…':adj.nombre;
+    const fecha=new Date(adj.fecha).toLocaleDateString('es',{day:'numeric',month:'short',year:'2-digit'});
+    const url=URL.createObjectURL(adj.blob);
+    // Thumbnail solo para imágenes
+    const thumb=esImg?`<img src="${url}" alt="${adj.nombre}" style="width:38px;height:38px;object-fit:cover;border-radius:5px;border:1px solid var(--border2);flex-shrink:0" onerror="this.style.display='none'">`:`<div style="width:38px;height:38px;border-radius:5px;border:1px solid var(--border2);background:var(--bg3);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">${ico}</div>`;
+    return`<div style="display:flex;align-items:center;gap:9px;padding:7px 0;border-bottom:1px solid var(--border)">
+      ${thumb}
+      <div style="flex:1;min-width:0">
+        <div class="sm f6" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${adj.nombre}">${nombre}</div>
+        <div class="xs c3">${fecha} · ${fmtSize(adj.tamaño)}</div>
+      </div>
+      <div style="display:flex;gap:5px;flex-shrink:0">
+        <a href="${url}" target="_blank" class="btn bs bsm" style="font-size:11px;padding:4px 9px;text-decoration:none" title="Ver documento">👁 Ver</a>
+        <button class="btn bg bsm" style="font-size:11px;padding:4px 9px;color:var(--rd)" onclick="deleteAdjunto('${adj.id}','${pacienteId}')" title="Eliminar">🗑</button>
+      </div>
+    </div>`;
+  }).join('')+'<div class="xs c3" style="padding-top:7px;text-align:right">'+adjs.length+' documento'+(adjs.length!==1?'s':'')+'</div>';
+}
+
 // ═══════════════════════════════════════════════
 // HISTORIAL LONGITUDINAL
 // ═══════════════════════════════════════════════
@@ -1955,17 +2199,26 @@ function getCtxRecs(p){
   const txQxLen=(p.txQx||[]).length>0;
 
   // ── EHP-5: impacto calidad de vida ──
-  const ehpTotal=[1,2,3,4,5].reduce((a,i)=>a+(parseInt(p['ehp'+i])||0),0);
-  if(ehpTotal>=8){
-    const ehpLblCtx=ehpTotal>=12?'muy severo':'severo';
+  let ehpTotal=0,ehpMax=15,ehpVer='EHP-5';
+  if(p.ehpMode==='30'&&p.ehp30){for(let i=1;i<=30;i++)ehpTotal+=(parseInt(p.ehp30['e'+i])||0);ehpMax=120;ehpVer='EHP-30';}
+  else{ehpTotal=[1,2,3,4,5].reduce((a,i)=>a+(parseInt(p['ehp'+i])||0),0);}
+  const ehpPct=ehpTotal/ehpMax;
+  if(ehpPct>=0.5){
+    const ehpLblCtx=ehpPct>=0.75?'muy severo':'severo';
     const dominios=[];
-    if(parseInt(p.ehp1)>=2)dominios.push('actividad diaria');
-    if(parseInt(p.ehp2)>=2)dominios.push('vida sexual');
-    if(parseInt(p.ehp3)>=2)dominios.push('relaciones sociales');
-    if(parseInt(p.ehp4)>=2)dominios.push('bienestar emocional');
-    if(parseInt(p.ehp5)>=2)dominios.push('sueño/energía');
+    if(p.ehpMode==='30'&&p.ehp30){
+      const ds=[0,0,0,0,0];for(let i=1;i<=30;i++)ds[Math.floor((i-1)/6)]+=(parseInt(p.ehp30['e'+i])||0);
+      const dNames=['dolor físico','bienestar emocional','relaciones sociales','autoestima','trabajo/vida diaria'];
+      ds.forEach((v,i)=>{if(v>=12)dominios.push(dNames[i]);});
+    } else {
+      if(parseInt(p.ehp1)>=2)dominios.push('actividad diaria');
+      if(parseInt(p.ehp2)>=2)dominios.push('vida sexual');
+      if(parseInt(p.ehp3)>=2)dominios.push('relaciones sociales');
+      if(parseInt(p.ehp4)>=2)dominios.push('bienestar emocional');
+      if(parseInt(p.ehp5)>=2)dominios.push('sueño/energía');
+    }
     recs.push({color:'var(--pu)',
-      titulo:`EHP-5 ${ehpTotal}/15 — Impacto ${ehpLblCtx} en calidad de vida`,
+      titulo:`${ehpVer} ${ehpTotal}/${ehpMax} — Impacto ${ehpLblCtx} en calidad de vida`,
       texto:`Dominios afectados: ${dominios.length?dominios.join(', '):'múltiples'}. ESHRE 2022 (Rec.38) recomienda apoyo psicológico y fisioterapia pélvica como coadyuvantes. Valorar escalada terapéutica si el tratamiento actual no mejora la calidad de vida.`,
       seccion:'tratamiento',tab:0});
   }
@@ -2357,8 +2610,51 @@ function cBB(){
 }
 
 // ═══════════════════════════════════════════════
-// EHP-5 CALIDAD DE VIDA
+// EHP-5 / EHP-30 — CALIDAD DE VIDA
 // ═══════════════════════════════════════════════
+
+// Estado del toggle EHP-30
+let _ehp30Active = false;
+
+function toggleEHP30(){
+  _ehp30Active = !_ehp30Active;
+  const wrap  = document.getElementById('ehpToggleWrap');
+  const knob  = document.getElementById('ehpToggleKnob');
+  const b5    = document.getElementById('ehp5Block');
+  const b30   = document.getElementById('ehp30Block');
+  const title = document.getElementById('ehpBoxTitle');
+  const desc  = document.getElementById('ehpBoxDesc');
+  const den   = document.getElementById('ehpDen');
+  if(_ehp30Active){
+    wrap.style.background = 'var(--pk)';
+    knob.style.left = '22px';
+    b5.style.display   = 'none';
+    b30.style.display  = 'block';
+    title.textContent  = '📋 EHP-30 — Calidad de vida (ESHRE 2022 Rec.38)';
+    desc.textContent   = 'Evaluación completa: 5 dominios · 30 ítems · Score 0–120. 0=Nunca · 1=Raramente · 2=A veces · 3=Frecuentemente · 4=Siempre';
+    if(den) den.textContent = '/ 120';
+    uEHP30();
+  } else {
+    wrap.style.background = 'var(--border2)';
+    knob.style.left = '2px';
+    b5.style.display   = 'block';
+    b30.style.display  = 'none';
+    title.textContent  = '📋 EHP-5 — Calidad de vida (ESHRE 2022 Rec.38)';
+    desc.textContent   = 'Evaluación rápida: 5 dominios · Score 0–15. 0 = Nunca · 1 = A veces · 2 = Frecuentemente · 3 = Siempre';
+    if(den) den.textContent = '/ 15';
+    uEHP();
+  }
+}
+
+// Helper para calcular interpretación EHP según porcentaje del máximo
+function ehpInterp(total, max){
+  const pct = total / max;
+  if(pct <= 0.2)  return {col:'var(--gr)', texto:'Sin impacto significativo',   desc:'Calidad de vida no afectada o mínimamente afectada'};
+  if(pct <= 0.5)  return {col:'var(--or)', texto:'Impacto moderado',            desc:'Los síntomas afectan de forma notable a la vida diaria'};
+  if(pct <= 0.75) return {col:'var(--rd)', texto:'Impacto severo',              desc:'Afectación importante — valorar escalada terapéutica'};
+  return               {col:'var(--rd)', texto:'Impacto muy severo',            desc:'Afectación grave en todos los dominios — acción prioritaria'};
+}
+
 function uEHP(){
   const vals=[1,2,3,4,5].map(i=>{
     const el=document.getElementById('ehp'+i);
@@ -2373,26 +2669,50 @@ function uEHP(){
   const lbl=document.getElementById('ehpLbl');
   const sub=document.getElementById('ehpSub');
   if(!ring)return;
+  const {col,texto,desc} = ehpInterp(total, 15);
   num.textContent=total;
-  let col,texto,desc;
-  if(total<=3){
-    col='var(--gr)';texto='Sin impacto significativo';
-    desc='Calidad de vida no afectada o mínimamente afectada';
-  } else if(total<=7){
-    col='var(--or)';texto='Impacto moderado';
-    desc='Los síntomas afectan de forma notable a la vida diaria';
-  } else if(total<=11){
-    col='var(--rd)';texto='Impacto severo';
-    desc='Afectación importante — valorar escalada terapéutica';
-  } else {
-    col='var(--rd)';texto='Impacto muy severo';
-    desc='Afectación grave en todos los dominios — acción prioritaria';
-  }
   ring.style.borderColor=col;
   num.style.color=col;
   lbl.style.color=col;
   lbl.textContent=texto;
   sub.textContent=desc;
+}
+
+function uEHP30(){
+  // Leer y mostrar los 30 ítems
+  let total=0;
+  const dom=[0,0,0,0,0]; // acumuladores por dominio
+  for(let i=1;i<=30;i++){
+    const el=document.getElementById('e30_'+i);
+    const v=el?parseInt(el.value)||0:0;
+    const lbl=document.getElementById('e30_'+i+'v');
+    if(lbl)lbl.textContent=v;
+    total+=v;
+    dom[Math.floor((i-1)/6)]+=v; // 6 ítems por dominio
+  }
+  // Subtotales por dominio
+  for(let d=1;d<=5;d++){
+    const el=document.getElementById('ehp30s'+d);
+    if(el)el.textContent=dom[d-1];
+  }
+  // Score total
+  const ring=document.getElementById('ehp30R');
+  const num=document.getElementById('ehp30N');
+  const lbl=document.getElementById('ehp30Lbl');
+  const sub=document.getElementById('ehp30Sub');
+  if(!ring)return;
+  const {col,texto,desc} = ehpInterp(total, 120);
+  num.textContent=total;
+  ring.style.borderColor=col;
+  num.style.color=col;
+  lbl.style.color=col;
+  lbl.textContent=texto;
+  sub.textContent=desc;
+  // Sincronizar también el ring compartido del formulario
+  const sharedR=document.getElementById('ehpR');
+  const sharedN=document.getElementById('ehpN');
+  if(sharedR){sharedR.style.borderColor=col;}
+  if(sharedN){sharedN.textContent=total;sharedN.style.color=col;}
 }
 
 // ═══════════════════════════════════════════════
@@ -2529,9 +2849,27 @@ function bRpt(p,type){
   let body='';
   if(type==='clinico'||type==='dx'){
     body+=`<div class="rs"><h3>1. Datos de la Paciente</h3>${row('Nombre',p.nombre)}${row('NHC',p.nhc)}${row('Edad',age(p.fechaNac)+' años')}${row('Fecha nacimiento',p.fechaNac?new Date(p.fechaNac).toLocaleDateString('es'):'—')}${row('Estado civil',p.estadoCivil)}${row('Paridad',p.paridad)}${row('IMC',p.imc?p.imc+' kg/m²':'—')}${row('Menarquia',p.menarquia?p.menarquia+' años':'—')}</div>`;
-    const ehpTotal=[1,2,3,4,5].reduce((a,i)=>a+(parseInt(p['ehp'+i])||0),0);
-    const ehpLblR=ehpTotal<=3?'Sin impacto significativo ('+ehpTotal+'/15)':ehpTotal<=7?'Impacto moderado ('+ehpTotal+'/15)':ehpTotal<=11?'Impacto severo ('+ehpTotal+'/15)':'Impacto muy severo ('+ehpTotal+'/15)';
-    body+=`<div class="rs"><h3>2. Síntomas y Calidad de Vida</h3>${row('Síntomas',(p.sintomas||[]).join(', '))}${row('EVA dismenorrea',(p.evaD||0)+'/10')}${row('EVA dolor pélvico',(p.evaP||0)+'/10')}${row('Duración síntomas',p.duracion)}${row('Demora diagnóstica',p.demora)}${ehpTotal>0?row('EHP-5 Calidad de vida',ehpLblR):''}${ehpTotal>0?row('  · Actividad diaria',p.ehp1+'/3'):''}${ehpTotal>0?row('  · Vida sexual',p.ehp2+'/3'):''}${ehpTotal>0?row('  · Relaciones sociales',p.ehp3+'/3'):''}${ehpTotal>0?row('  · Bienestar emocional',p.ehp4+'/3'):''}${ehpTotal>0?row('  · Sueño y energía',p.ehp5+'/3'):''}</div>`;
+    // EHP: calcular según modo
+    let ehpTotalR=0,ehpMaxR=15,ehpVerR='EHP-5';
+    if(p.ehpMode==='30'&&p.ehp30){for(let i=1;i<=30;i++)ehpTotalR+=(parseInt(p.ehp30['e'+i])||0);ehpMaxR=120;ehpVerR='EHP-30';}
+    else{ehpTotalR=[1,2,3,4,5].reduce((a,i)=>a+(parseInt(p['ehp'+i])||0),0);}
+    const ehpPctR2=ehpTotalR/ehpMaxR;
+    const ehpLblR=(ehpPctR2<=0.2?'Sin impacto significativo':ehpPctR2<=0.5?'Impacto moderado':ehpPctR2<=0.75?'Impacto severo':'Impacto muy severo')+' ('+ehpTotalR+'/'+ehpMaxR+')';
+    let ehpRowsR='';
+    if(ehpTotalR>0){
+      ehpRowsR+=row(ehpVerR+' Calidad de vida',ehpLblR);
+      if(p.ehpMode==='30'&&p.ehp30){
+        const dsR=[0,0,0,0,0];for(let i=1;i<=30;i++)dsR[Math.floor((i-1)/6)]+=(parseInt(p.ehp30['e'+i])||0);
+        ['D1 Dolor físico','D2 Bienestar emocional','D3 Relaciones sociales','D4 Autoestima','D5 Trabajo/vida diaria'].forEach((n,i)=>ehpRowsR+=row('  · '+n,dsR[i]+'/24'));
+      } else {
+        ehpRowsR+=row('  · Actividad diaria',(p.ehp1||0)+'/3');
+        ehpRowsR+=row('  · Vida sexual',(p.ehp2||0)+'/3');
+        ehpRowsR+=row('  · Relaciones sociales',(p.ehp3||0)+'/3');
+        ehpRowsR+=row('  · Bienestar emocional',(p.ehp4||0)+'/3');
+        ehpRowsR+=row('  · Sueño y energía',(p.ehp5||0)+'/3');
+      }
+    }
+    body+=`<div class="rs"><h3>2. Síntomas y Calidad de Vida</h3>${row('Síntomas',(p.sintomas||[]).join(', '))}${row('EVA dismenorrea',(p.evaD||0)+'/10')}${row('EVA dolor pélvico',(p.evaP||0)+'/10')}${row('Duración síntomas',p.duracion)}${row('Demora diagnóstica',p.demora)}${ehpRowsR}</div>`;
     body+=`<div class="rs"><h3>3. Diagnóstico</h3>${row('Patología',dxL[p.dx]||'—')}${row('Fecha diagnóstico',p.fechaDx?new Date(p.fechaDx).toLocaleDateString('es'):'—')}${row('Método',p.metodoDx)}${(p.dx==='endometriosis'||p.dx==='ambas')?row('Estadio rASRM',p.asrm?'Estadio '+p.asrm:'—')+row('Localización',(p.locEndo||[]).join(', '))+row('Adenomiosis',p.adenomiosis):''}${(p.dx==='miomas'||p.dx==='ambas')?row('Tipo FIGO','Tipo '+(p.figo||'?'))+row('N.º miomas',p.numMiomas)+row('Tamaño mayor',p.tamMioma?p.tamMioma+' mm':'—')+row('Hgb',p.hgb?p.hgb+' g/dL':'—')+row('AMH',p.amh?p.amh+' ng/mL':'—'):''}${row('Notas',p.notesDx)}</div>`;
   }
   if(type==='clinico'||type==='tx'){
@@ -2698,9 +3036,12 @@ function buildCSVRow(p,sep,cols){
       escCSV(p.estadoCivil),escCSV(p.paridad),escCSV(p.imc),escCSV(p.menarquia),escCSV(p.anticoncepcion),escCSV(p.deseoGestacion));
   }
   if(cols.includes('Síntomas & EVA')){
-    const ehpTotExp=[1,2,3,4,5].reduce((a,i)=>a+(parseInt(p['ehp'+i])||0),0);
+    let ehpTotExp=0,ehpMaxExp=15,ehpVerExp='EHP-5';
+    if(p.ehpMode==='30'&&p.ehp30){for(let i=1;i<=30;i++)ehpTotExp+=(parseInt(p.ehp30['e'+i])||0);ehpMaxExp=120;ehpVerExp='EHP-30';}
+    else{ehpTotExp=[1,2,3,4,5].reduce((a,i)=>a+(parseInt(p['ehp'+i])||0),0);}
     row.push(escCSV(p.sintomas),escCSV(p.evaD||0),escCSV(p.evaP||0),escCSV(p.duracion),escCSV(p.demora),
-      escCSV(ehpTotExp||''),escCSV(p.ehp1||''),escCSV(p.ehp2||''),escCSV(p.ehp3||''),escCSV(p.ehp4||''),escCSV(p.ehp5||''));
+      escCSV(ehpVerExp),escCSV(ehpTotExp||''),escCSV(ehpMaxExp),
+      escCSV(p.ehp1||''),escCSV(p.ehp2||''),escCSV(p.ehp3||''),escCSV(p.ehp4||''),escCSV(p.ehp5||''));
   }
   if(cols.includes('Diagnóstico')){
     row.push(escCSV(p.dx),escCSV(p.fechaDx),escCSV(p.asrm),escCSV(p.metodoDx),
@@ -2724,7 +3065,7 @@ function buildCSVHeader(sep,cols){
     h.push('Nombre','NHC','Fecha_Nac','Edad','Estado_Civil','Paridad','IMC','Menarquia','Anticoncepcion','Deseo_Gestacion');
   if(cols.includes('Síntomas & EVA'))
     h.push('Sintomas','EVA_Dismenorrea','EVA_Dolor_Pelvico','Duracion_Sintomas','Demora_Diagnostica',
-      'EHP5_Total','EHP5_Actividad','EHP5_VidaSexual','EHP5_Relaciones','EHP5_Emocional','EHP5_Sueno');
+      'EHP_Version','EHP_Total','EHP_Maximo','EHP5_Actividad','EHP5_VidaSexual','EHP5_Relaciones','EHP5_Emocional','EHP5_Sueno');
   if(cols.includes('Diagnóstico'))
     h.push('Diagnostico','Fecha_Dx','Estadio_rASRM','Metodo_Dx','Localizacion_Endo','Tam_Endometrioma_mm','Adenomiosis','FIGO_Mioma','Num_Miomas','Tam_Mayor_Mioma_mm','Distorsion_Cavidad');
   if(cols.includes('Tratamiento'))
@@ -2773,9 +3114,11 @@ function expXLSX(){
     const e2=cols.includes('Fertilidad');
     const f=cols.includes('Laboratorio');
     if(a)cells.push(xe(p.nombre),xe(p.nhc),xe(p.fechaNac),xe(p.fechaNac?Math.floor((new Date()-new Date(p.fechaNac))/(365.25*24*3600*1e3)):''),xe(p.estadoCivil),xe(p.paridad),xe(p.imc),xe(p.menarquia),xe(p.anticoncepcion),xe(p.deseoGestacion));
-    if(b){const ehpTotXl=[1,2,3,4,5].reduce((a,i)=>a+(parseInt(p['ehp'+i])||0),0);
+    if(b){let ehpTotXl=0,ehpMaxXl=15,ehpVerXl='EHP-5';
+      if(p.ehpMode==='30'&&p.ehp30){for(let i=1;i<=30;i++)ehpTotXl+=(parseInt(p.ehp30['e'+i])||0);ehpMaxXl=120;ehpVerXl='EHP-30';}
+      else{ehpTotXl=[1,2,3,4,5].reduce((a,i)=>a+(parseInt(p['ehp'+i])||0),0);}
       cells.push(xe(p.sintomas),xe(p.evaD||0),xe(p.evaP||0),xe(p.duracion),xe(p.demora),
-        xe(ehpTotXl||''),xe(p.ehp1||''),xe(p.ehp2||''),xe(p.ehp3||''),xe(p.ehp4||''),xe(p.ehp5||''));}
+        xe(ehpVerXl),xe(ehpTotXl||''),xe(ehpMaxXl),xe(p.ehp1||''),xe(p.ehp2||''),xe(p.ehp3||''),xe(p.ehp4||''),xe(p.ehp5||''));}
     if(c)cells.push(xe(p.dx),xe(p.fechaDx),xe(p.asrm),xe(p.metodoDx),xe(p.locEndo),xe(p.tamEndo),xe(p.adenomiosis),xe(p.figo),xe(p.numMiomas),xe(p.tamMioma),xe(p.distorsion));
     if(d)cells.push(xe(p.estadoTx),xe(p.txMed),xe(p.txQx),xe(p.respTx),xe(p.proxRev));
     if(e2)cells.push(xe(p.tiempoInf),xe(p.efi),xe(p.factorMasc),xe(p.permTub),xe(p.tra),xe(p.ciclosFIV));
@@ -2809,7 +3152,10 @@ function buildStats(){
   const avgAMH=amhs.length?(amhs.reduce((a,b)=>a+b,0)/amhs.length).toFixed(2):'-';
   const evas=DB.map(p=>parseInt(p.evaD)).filter(v=>!isNaN(v));
   const avgEVA=evas.length?(evas.reduce((a,b)=>a+b,0)/evas.length).toFixed(1):'-';
-  const ehps=DB.map(p=>[1,2,3,4,5].reduce((a,i)=>a+(parseInt(p['ehp'+i])||0),0)).filter(v=>v>0);
+  const ehps=DB.map(p=>{
+    if(p.ehpMode==='30'&&p.ehp30){let t=0;for(let i=1;i<=30;i++)t+=(parseInt(p.ehp30['e'+i])||0);return t>0?Math.round(t/8):0;}// normalizar a /15 aprox
+    return[1,2,3,4,5].reduce((a,i)=>a+(parseInt(p['ehp'+i])||0),0);
+  }).filter(v=>v>0);
   const avgEHP=ehps.length?(ehps.reduce((a,b)=>a+b,0)/ehps.length).toFixed(1):'-';
   const pct=n=>t?Math.round(n/t*100)+'%':'0%';
   const txMedAll=DB.flatMap(p=>p.txMed||[]);
@@ -2837,7 +3183,7 @@ function buildStats(){
         <tr><th>Variable</th><th>Media</th><th>N válidos</th></tr>
         <tr><td>Edad (años)</td><td>${avgAge}</td><td>${ages.length}</td></tr>
         <tr><td>EVA Dismenorrea</td><td>${avgEVA}/10</td><td>${evas.length}</td></tr>
-        <tr><td>EHP-5 Calidad de vida</td><td>${avgEHP}/15</td><td>${ehps.length}</td></tr>
+        <tr><td>EHP (5 o 30) Calidad de vida</td><td>${avgEHP} (norm.)</td><td>${ehps.length}</td></tr>
         <tr><td>Hemoglobina (g/dL)</td><td>${avgHgb}</td><td>${hgbs.length}</td></tr>
         <tr><td>AMH (ng/mL)</td><td>${avgAMH}</td><td>${amhs.length}</td></tr>
       </table>
@@ -3041,6 +3387,136 @@ document.addEventListener('DOMContentLoaded',async()=>{
     });
   }
 });
+
+// ═══════════════════════════════════════════════
+// PWA — SERVICE WORKER + INSTALACIÓN
+// ═══════════════════════════════════════════════
+(()=>{
+  let _deferredPrompt=null;
+  let _swReg=null;
+
+  // ── Registrar Service Worker ──
+  if('serviceWorker' in navigator){
+    window.addEventListener('load',()=>{
+      navigator.serviceWorker.register('./sw.js')
+        .then(reg=>{
+          _swReg=reg;
+          console.log('SW registrado:',reg.scope);
+
+          // Detectar actualización disponible
+          reg.addEventListener('updatefound',()=>{
+            const newWorker=reg.installing;
+            newWorker.addEventListener('statechange',()=>{
+              if(newWorker.state==='installed'&&navigator.serviceWorker.controller){
+                // Hay versión nueva — mostrar aviso discreto
+                showPWAUpdateToast();
+              }
+            });
+          });
+        })
+        .catch(err=>console.warn('SW no disponible:',err));
+    });
+  }
+
+  // ── Capturar evento beforeinstallprompt ──
+  window.addEventListener('beforeinstallprompt',e=>{
+    e.preventDefault();
+    _deferredPrompt=e;
+    // Mostrar botón de instalación en topbar
+    const btn=document.getElementById('installBtn');
+    if(btn)btn.classList.add('show');
+    // Mostrar toast invitando a instalar (solo primera vez)
+    if(!localStorage.getItem('pwa_install_dismissed')){
+      setTimeout(()=>showPWAInstallToast(),2500);
+    }
+  });
+
+  // ── App ya instalada ──
+  window.addEventListener('appinstalled',()=>{
+    _deferredPrompt=null;
+    const btn=document.getElementById('installBtn');
+    if(btn)btn.classList.remove('show');
+    removePWAToast();
+    tst('GinecoApp Pro instalada correctamente ✓','ok');
+    localStorage.setItem('pwa_installed','1');
+  });
+
+  // ── Trigger instalación desde botón ──
+  window.pwaTriggerInstall=async function(){
+    if(!_deferredPrompt){
+      tst('Instalación no disponible en este navegador','in');
+      return;
+    }
+    removePWAToast();
+    _deferredPrompt.prompt();
+    const{outcome}=await _deferredPrompt.userChoice;
+    if(outcome==='accepted'){
+      _deferredPrompt=null;
+      const btn=document.getElementById('installBtn');
+      if(btn)btn.classList.remove('show');
+    }
+  };
+
+  // ── Toast de invitación a instalar ──
+  function showPWAInstallToast(){
+    removePWAToast();
+    const t=document.createElement('div');
+    t.id='pwaToast';
+    t.className='pwa-toast';
+    t.innerHTML=`<span style="font-size:20px">📲</span>
+      <div style="flex:1;min-width:0">
+        <div style="font-weight:700;font-size:13px">Instalar GinecoApp Pro</div>
+        <div style="font-size:11px;opacity:.85">Acceso rápido y uso sin conexión</div>
+      </div>
+      <button onclick="pwaTriggerInstall()">Instalar</button>
+      <button onclick="dismissPWAToast()" style="background:transparent;border:none;padding:4px 6px;font-size:16px;opacity:.7">✕</button>`;
+    document.body.appendChild(t);
+    requestAnimationFrame(()=>requestAnimationFrame(()=>t.classList.add('show')));
+  }
+
+  // ── Toast de actualización disponible ──
+  function showPWAUpdateToast(){
+    removePWAToast();
+    const t=document.createElement('div');
+    t.id='pwaToast';
+    t.className='pwa-toast';
+    t.innerHTML=`<span style="font-size:20px">🔄</span>
+      <div style="flex:1;min-width:0">
+        <div style="font-weight:700;font-size:13px">Actualización disponible</div>
+        <div style="font-size:11px;opacity:.85">Nueva versión de GinecoApp lista</div>
+      </div>
+      <button onclick="pwaApplyUpdate()">Actualizar</button>
+      <button onclick="dismissPWAToast()" style="background:transparent;border:none;padding:4px 6px;font-size:16px;opacity:.7">✕</button>`;
+    document.body.appendChild(t);
+    requestAnimationFrame(()=>requestAnimationFrame(()=>t.classList.add('show')));
+  }
+
+  window.dismissPWAToast=function(){
+    removePWAToast();
+    localStorage.setItem('pwa_install_dismissed','1');
+  };
+
+  window.pwaApplyUpdate=function(){
+    if(_swReg&&_swReg.waiting){
+      _swReg.waiting.postMessage({type:'SKIP_WAITING'});
+    }
+    removePWAToast();
+    window.location.reload();
+  };
+
+  function removePWAToast(){
+    const t=document.getElementById('pwaToast');
+    if(t)t.remove();
+  }
+
+  // ── Detectar si ya está instalada (standalone) ──
+  if(window.matchMedia('(display-mode: standalone)').matches||
+     window.navigator.standalone===true){
+    localStorage.setItem('pwa_installed','1');
+    // En modo standalone, persist() es automático — no necesitamos pedirlo
+    console.log('Ejecutando en modo PWA instalada');
+  }
+})();
 </script>
 </body>
 </html>
