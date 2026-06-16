@@ -616,6 +616,44 @@ button,a{touch-action:manipulation}
         <div class="fg"><label class="fl">Próxima revisión</label><input type="date" class="fc" id="fPR"></div>
       </div>
       <div class="fg"><label class="fl">Plan terapéutico</label><textarea class="fc" id="fPTx" placeholder="Objetivos, cambios de medicación…"></textarea></div>
+      <hr class="div">
+      <div class="box bw mb3"><div class="bt">⚠️ Medicación concomitante — Interacciones con antagonistas GnRH</div>Registra todos los fármacos que toma la paciente actualmente. Algunos pueden interaccionar con Relugolix o Linzagolix (transportadores P-gp, CYP3A4).</div>
+      <div class="fg"><label class="fl">Medicación concomitante habitual</label>
+        <div class="chips" id="cMC">
+          <div class="chip" onclick="ck(this)">Anticoagulantes (ACO)</div>
+          <div class="chip" onclick="ck(this)">Antiagregantes</div>
+          <div class="chip" onclick="ck(this)">Antihipertensivos (IECA/ARA-II)</div>
+          <div class="chip" onclick="ck(this)">Betabloqueantes</div>
+          <div class="chip" onclick="ck(this)">Estatinas</div>
+          <div class="chip" onclick="ck(this)">Antidiabéticos orales</div>
+          <div class="chip" onclick="ck(this)">Insulina</div>
+          <div class="chip" onclick="ck(this)">Antiepilépticos</div>
+          <div class="chip" onclick="ck(this)">Antidepresivos (ISRS)</div>
+          <div class="chip" onclick="ck(this)">Antidepresivos (IRSN)</div>
+          <div class="chip" onclick="ck(this)">Benzodiacepinas</div>
+          <div class="chip" onclick="ck(this)">Ansiolíticos / Hipnóticos</div>
+          <div class="chip" onclick="ck(this)">Corticoides sistémicos</div>
+          <div class="chip" onclick="ck(this)">Inmunosupresores</div>
+          <div class="chip" onclick="ck(this)">Inhibidores bomba protones</div>
+          <div class="chip" onclick="ck(this)">Antihistamínicos</div>
+          <div class="chip" onclick="ck(this)">Tiroxina (levotiroxina)</div>
+          <div class="chip" onclick="ck(this)">Bifosfonatos</div>
+          <div class="chip" onclick="ck(this)">Calcio / Vitamina D</div>
+          <div class="chip" onclick="ck(this)">Hierro oral</div>
+          <div class="chip" onclick="ck(this)">Antifúngicos azólicos</div>
+          <div class="chip" onclick="ck(this)">Rifampicina / Rifabutina</div>
+          <div class="chip" onclick="ck(this)">Inhibidores P-gp / CYP3A4</div>
+          <div class="chip" onclick="ck(this)">Suplementos / Fitoterapia</div>
+        </div>
+      </div>
+      <div class="fg"><label class="fl">Otros fármacos (texto libre)</label>
+        <input class="fc" id="fMCTxt" placeholder="Nombre comercial o principio activo, dosis…">
+        <div class="fh">Incluir dosis y pauta si es relevante para la interacción</div>
+      </div>
+      <div id="mcAlertBox" style="display:none" class="box br mt2u">
+        <div class="bt">🚨 Interacción potencial con antagonistas GnRH</div>
+        <div id="mcAlertTxt" class="sm"></div>
+      </div>
     </div>
     <div id="ft4" style="display:none">
       <div class="fr2">
@@ -1474,7 +1512,7 @@ const TAB_FIELDS=[
   // Tab 2 — Diagnóstico (dx + fechaDx + campos condicionales)
   ['fDx','fFDx','fAS','fMD','fFG','fNM'],
   // Tab 3 — Tratamiento (estado + próxima revisión)
-  ['fET','fPR','fRT'],
+  ['fET','fPR','fRT','fMCTxt'],
   // Tab 4 — Fertilidad (EFI + TRA)
   ['fTI','fEFI','fTRA']
 ];
@@ -1483,11 +1521,11 @@ const TAB_CHIPS=[
   ['cAF'],           // tab 0
   ['cSx'],           // tab 1
   ['cLE','cSM'],     // tab 2
-  ['cTM','cTQ'],     // tab 3
+  ['cTM','cTQ','cMC'],     // tab 3
   []                 // tab 4
 ];
 // Totales máximos por tab (campos + chips cuentan como 1)
-const TAB_MAX=[8,3,6,3,3];
+const TAB_MAX=[8,3,6,4,3];
 
 function uTabBadges(){
   TAB_FIELDS.forEach((fields,ti)=>{
@@ -1555,7 +1593,8 @@ function clr(){
   ['fN','fNHC','fTel','fIMC','fMen','fPar','fTI','fCF','fNDx','fNF','fPTx','fObs','fTE','fTM','fVU','fHb','fAMH','fEFI'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
   ['fFN','fFDx','fPR'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
   ['fEC','fAnt','fDG','fDx','fAS','fMD','fAd','fFG','fNM','fDC','fET','fRT','fDur','fDem','fFM','fPT','fTRA'].forEach(id=>{const e=document.getElementById(id);if(e)e.selectedIndex=0;});
-  ['cAF','cSx','cLE','cSM','cTM','cTQ'].forEach(id=>document.querySelectorAll('#'+id+' .chip').forEach(c=>c.classList.remove('on')));
+  ['cAF','cSx','cLE','cSM','cTM','cTQ','cMC'].forEach(id=>document.querySelectorAll('#'+id+' .chip').forEach(c=>c.classList.remove('on')));
+  const mcTxt=document.getElementById('fMCTxt');if(mcTxt)mcTxt.value='';hideAlert('mcAlertBox');
   document.getElementById('eDr').value=0;document.getElementById('eDv').textContent=0;
   document.getElementById('ePr').value=0;document.getElementById('ePv').textContent=0;
   [1,2,3,4,5].forEach(i=>{
@@ -1614,6 +1653,8 @@ function gD(){
     notesDx:document.getElementById('fNDx').value,
     estadoTx:document.getElementById('fET').value,
     txMed:gC('cTM'),txQx:gC('cTQ'),
+    medConc:gC('cMC'),
+    medConcTxt:document.getElementById('fMCTxt').value.trim(),
     respTx:document.getElementById('fRT').value,
     proxRev:document.getElementById('fPR').value,
     planTx:document.getElementById('fPTx').value,
@@ -1626,7 +1667,8 @@ function gD(){
     notesFert:document.getElementById('fNF').value,
     createdAt:eId?(DB.find(p=>p.id===eId)||{}).createdAt||new Date().toISOString():new Date().toISOString(),
     updatedAt:new Date().toISOString(),
-    historial:eId?(DB.find(p=>p.id===eId)||{}).historial||[]:[]
+    historial:eId?(DB.find(p=>p.id===eId)||{}).historial||[]:[],
+    notas:eId?(DB.find(p=>p.id===eId)||{}).notas||[]:[]
   };
 }
 function fillF(p){
@@ -1668,6 +1710,9 @@ function fillF(p){
   s('fHb',p.hgb);s('fAMH',p.amh);s('fNDx',p.notesDx);
   s('fET',p.estadoTx||'ninguno');
   sC('cTM',p.txMed);sC('cTQ',p.txQx);
+  sC('cMC',p.medConc||[]);
+  s('fMCTxt',p.medConcTxt||'');
+  setTimeout(()=>checkMedInteractions(gC('cTM'),gC('cMC')),0);
   s('fRT',p.respTx);s('fPR',p.proxRev);s('fPTx',p.planTx);
   s('fTI',p.tiempoInf);s('fEFI',p.efi);s('fFM',p.factorMasc);s('fPT',p.permTub);s('fTRA',p.tra||'ninguna');
   s('fCF',p.ciclosFIV);s('fNF',p.notesFert);
@@ -1814,6 +1859,69 @@ async function dPt(){
 }
 
 // ═══════════════════════════════════════════════
+// MEDICACIÓN CONCOMITANTE — INTERACCIONES GnRH
+// ═══════════════════════════════════════════════
+
+// Mapa de interacciones relevantes con antagonistas GnRH (Relugolix / Linzagolix)
+// Basado en ficha técnica FDA/EMA y mecanismo P-gp / CYP3A4
+const MC_INTERACTIONS = {
+  'Anticoagulantes (ACO)':       {nivel:'alta', msg:'Anticoagulantes orales (warfarina, acenocumarol): monitorizar INR. Relugolix puede alterar absorción vía P-gp.'},
+  'Antiagregantes':              {nivel:'media', msg:'Antiagregantes: precaución por riesgo hemorrágico combinado con SUA.'},
+  'Antifúngicos azólicos':       {nivel:'alta', msg:'Azoles (fluconazol, itraconazol): inhibidores potentes P-gp/CYP3A4. Pueden aumentar exposición a Relugolix hasta 2–4×. Evitar uso concomitante.'},
+  'Rifampicina / Rifabutina':    {nivel:'alta', msg:'Rifampicina/rifabutina: inductores potentes P-gp/CYP3A4. Reducen eficacia de Relugolix significativamente. Evitar.'},
+  'Inhibidores P-gp / CYP3A4':  {nivel:'alta', msg:'Inhibidores P-gp/CYP3A4 (claritromicina, verapamilo, ciclosporina…): aumentan Cmax de Relugolix. Usar con precaución o sustituir.'},
+  'Antiepilépticos':             {nivel:'media', msg:'Antiepilépticos inductores (fenitoína, carbamazepina, oxcarbazepina): inductores P-gp/CYP3A4. Pueden reducir niveles de Relugolix.'},
+  'Estatinas':                   {nivel:'baja', msg:'Estatinas (rosuvastatina, atorvastatina): sustrato P-gp. Monitorizar miopatía. Interacción habitualmente manejable.'},
+  'Corticoides sistémicos':      {nivel:'media', msg:'Corticoides sistémicos crónicos: aumentan riesgo de pérdida de masa ósea. Vigilar DMO si uso prolongado con GnRH antagonistas.'},
+  'Inmunosupresores':            {nivel:'alta', msg:'Ciclosporina, tacrolimus: inhibidores P-gp. Pueden aumentar niveles de Relugolix. Monitorizar.'},
+  'Bifosfonatos':                {nivel:'baja', msg:'Bifosfonatos: considerar si tratamiento GnRH prolongado por riesgo de pérdida ósea acumulada.'},
+};
+
+// Niveles de interacción con GnRH (en txMed seleccionado)
+const GNRH_ANT = ['Relugolix (antagonista)', 'Linzagolix (antagonista)', 'Agonistas GnRH'];
+
+function checkMedInteractions(txMed, medConc) {
+  const box = document.getElementById('mcAlertBox');
+  const txt = document.getElementById('mcAlertTxt');
+  if (!box || !txt) return;
+
+  const usaGnRH = (txMed || []).some(t => GNRH_ANT.includes(t));
+  if (!usaGnRH || !medConc || !medConc.length) {
+    hideAlert('mcAlertBox');
+    return;
+  }
+
+  const alertas = [];
+  const alta = [], media = [], baja = [];
+  medConc.forEach(m => {
+    const inter = MC_INTERACTIONS[m];
+    if (inter) {
+      if (inter.nivel === 'alta')  alta.push(`<li><strong>${m}:</strong> ${inter.msg}</li>`);
+      if (inter.nivel === 'media') media.push(`<li><strong>${m}:</strong> ${inter.msg}</li>`);
+      if (inter.nivel === 'baja')  baja.push(`<li><strong>${m}:</strong> ${inter.msg}</li>`);
+    }
+  });
+
+  if (!alta.length && !media.length && !baja.length) {
+    hideAlert('mcAlertBox');
+    return;
+  }
+
+  let html = '';
+  if (alta.length)  html += `<div style="color:var(--rd);font-weight:600;font-size:11.5px;margin-bottom:4px">🔴 Interacción alta — valorar sustitución:</div><ul style="padding-left:16px;font-size:12px;margin-bottom:8px">${alta.join('')}</ul>`;
+  if (media.length) html += `<div style="color:var(--or);font-weight:600;font-size:11.5px;margin-bottom:4px">🟡 Interacción moderada — monitorizar:</div><ul style="padding-left:16px;font-size:12px;margin-bottom:8px">${media.join('')}</ul>`;
+  if (baja.length)  html += `<div style="color:var(--gr);font-weight:600;font-size:11.5px;margin-bottom:4px">🟢 Interacción leve — precaución:</div><ul style="padding-left:16px;font-size:12px">${baja.join('')}</ul>`;
+
+  txt.innerHTML = html;
+  box.style.display = 'block';
+}
+
+function hideAlert(id) {
+  const el = document.getElementById(id);
+  if (el) el.style.display = 'none';
+}
+
+// ═══════════════════════════════════════════════
 // PATIENT LIST
 // ═══════════════════════════════════════════════
 const avc=['#c462a4','#7060f0','#3dba94','#e89830','#e85555','#3fa4e8','#8ec44f'];
@@ -1924,6 +2032,22 @@ function bCard(p){
       <div class="xs c3 f6 mb2" style="text-transform:uppercase;letter-spacing:.8px">Intervenciones quirúrgicas</div>
       <div style="display:flex;flex-wrap:wrap;gap:3px">${p.txQx.map(t=>`<span class="tag to">${t}</span>`).join('')}</div>
     </div>`:''}
+  ${(()=>{
+    const mc=p.medConc||[];const txt=p.medConcTxt||'';
+    if(!mc.length&&!txt)return'';
+    const usaGnRH=(p.txMed||[]).some(t=>GNRH_ANT.includes(t));
+    const warns=mc.filter(m=>MC_INTERACTIONS[m]);
+    const hasInter=usaGnRH&&warns.length>0;
+    const maxNivel=hasInter&&warns.some(m=>MC_INTERACTIONS[m].nivel==='alta')?'alta':hasInter&&warns.some(m=>MC_INTERACTIONS[m].nivel==='media')?'media':'baja';
+    const badgeCol=maxNivel==='alta'?'var(--rd)':maxNivel==='media'?'var(--or)':'var(--gr)';
+    return`<div class="mb3">
+      <div class="xs c3 f6 mb2" style="text-transform:uppercase;letter-spacing:.8px">Medicación concomitante${hasInter?` <span class="tag" style="font-size:9px;background:rgba(232,85,85,.15);color:${badgeCol};border-color:${badgeCol}">⚠ Interacción</span>`:''}
+      </div>
+      ${mc.length?`<div style="display:flex;flex-wrap:wrap;gap:3px;margin-bottom:4px">${mc.map(m=>{const inter=usaGnRH?MC_INTERACTIONS[m]:null;const col=inter?(inter.nivel==='alta'?'var(--rd)':inter.nivel==='media'?'var(--or)':'var(--gr)'):'';return`<span class="tag tgr" title="${inter?inter.msg:m}" style="${col?'border-color:'+col+40+';color:'+col:''}">${m}</span>`;}).join('')}</div>`:''}
+      ${txt?`<div class="xs c2 mt2u">📝 ${txt}</div>`:''}
+      ${hasInter?`<div class="xs" style="color:var(--or);margin-top:4px">⚠ ${warns.length} interacción${warns.length>1?'es':''} potencial${warns.length>1?'es':''} con antagonistas GnRH — ver ficha técnica</div>`:''}
+    </div>`;
+  })()}
   ${(p.deseoGestacion==='si'||p.deseoGestacion==='futuro')?`
     <div style="border-left:3px solid var(--gr);padding-left:10px;margin-bottom:12px">
       <div class="xs f6 cg mb1" style="text-transform:uppercase;letter-spacing:.8px">Fertilidad</div>
@@ -1950,9 +2074,154 @@ function bCard(p){
       <div class="xs c3" style="padding:6px 0;text-align:center">Cargando documentos…</div>
     </div>
   </div>
+  <div style="border:1px solid var(--border2);border-radius:var(--r2);overflow:hidden;margin-top:14px">
+    <div style="background:var(--bg3);padding:8px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:8px">
+      <div style="display:flex;align-items:center;gap:7px">
+        <div style="font-size:11.5px;font-weight:700;color:var(--pu)">📝 NOTAS DE VISITA</div>
+        <div class="xs c3">${(p.notas||[]).length} nota${(p.notas||[]).length!==1?'s':''}</div>
+      </div>
+      <button class="btn bsm" style="font-size:11px;padding:4px 10px;background:var(--pu);color:#fff;border:none" onclick="openAddNota('${p.id}')">+ Nueva nota</button>
+    </div>
+    <div id="notasList_${p.id}" style="padding:8px 12px">
+      ${buildNotasHTML(p)}
+    </div>
+  </div>
   <div id="ctxPanel" style="margin-top:14px"></div>
   <div class="xs c3" style="margin-top:12px;padding-top:8px;border-top:1px solid var(--border)">📅 Registrado: ${created}${updated}</div>`;
 }
+// ═══════════════════════════════════════════════
+// NOTAS CRONOLÓGICAS DE VISITA
+// ═══════════════════════════════════════════════
+
+// Renderiza la lista de notas de una paciente (síncono — las notas van en p.notas[])
+function buildNotasHTML(p){
+  const notas=(p.notas||[]).slice().sort((a,b)=>new Date(b.fecha)-new Date(a.fecha));
+  if(!notas.length){
+    return'<div class="xs c3" style="padding:8px 0;text-align:center">Sin notas de visita · Usa «+ Nueva nota» para añadir</div>';
+  }
+  return notas.map((n,i)=>{
+    const d=new Date(n.fecha);
+    const dStr=d.toLocaleDateString('es',{day:'numeric',month:'short',year:'numeric'});
+    const tStr=d.toLocaleTimeString('es',{hour:'2-digit',minute:'2-digit'});
+    const isFirst=i===0;
+    return`<div style="padding:8px 0;border-bottom:1px solid var(--border);${isFirst?'':''}">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:4px">
+        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+          <span class="xs f6" style="color:var(--pu)">${dStr}</span>
+          <span class="xs c3">${tStr}</span>
+          ${n.tipo?`<span class="tag tpu" style="font-size:9px">${n.tipo}</span>`:''}
+        </div>
+        <button class="btn bg bsm" style="font-size:11px;padding:3px 7px;color:var(--rd);flex-shrink:0" onclick="deleteNota('${p.id}','${n.id}')" title="Eliminar nota">🗑</button>
+      </div>
+      <div style="font-size:12.5px;color:var(--text);line-height:1.55;white-space:pre-wrap">${n.texto.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>
+    </div>`;
+  }).join('') + `<div class="xs c3" style="padding-top:6px;text-align:right">${notas.length} nota${notas.length!==1?'s':''} registrada${notas.length!==1?'s':''}</div>`;
+}
+
+// Abre el modal inline para añadir una nueva nota
+function openAddNota(pacienteId){
+  // Crear modal ligero sobre el modal de paciente
+  let existing=document.getElementById('notaModal');
+  if(existing)existing.remove();
+
+  const tipos=['Consulta','Revisión','Urgencia','Prueba diagnóstica','Resultado analítica','Llamada telefónica','Derivación','Otro'];
+  const today=new Date().toISOString().slice(0,10);
+
+  const m=document.createElement('div');
+  m.id='notaModal';
+  m.style.cssText='position:fixed;inset:0;z-index:500;background:rgba(0,0,0,.65);display:flex;align-items:center;justify-content:center;padding:16px';
+  m.innerHTML=`
+    <div style="background:var(--card);border:1px solid var(--border2);border-radius:var(--r);max-width:440px;width:100%;overflow:hidden;box-shadow:var(--shadow)">
+      <div style="padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
+        <div style="font-weight:700;font-size:14px;color:var(--pu)">📝 Nueva nota de visita</div>
+        <button class="btn bic bg" onclick="document.getElementById('notaModal').remove()" style="font-size:14px">✕</button>
+      </div>
+      <div style="padding:14px 16px">
+        <div class="fr2 mb3">
+          <div class="fg"><label class="fl">Fecha</label><input type="date" id="notaFecha" class="fc" value="${today}"></div>
+          <div class="fg"><label class="fl">Tipo de visita</label>
+            <select id="notaTipo" class="fc">
+              ${tipos.map(t=>`<option value="${t}">${t}</option>`).join('')}
+            </select>
+          </div>
+        </div>
+        <div class="fg"><label class="fl">Nota clínica</label>
+          <textarea id="notaTexto" class="fc" style="min-height:120px;resize:vertical" placeholder="Evolución clínica, hallazgos, decisiones terapéuticas, próximos pasos…" autofocus></textarea>
+        </div>
+      </div>
+      <div style="padding:10px 16px;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end">
+        <button class="btn bs bsm" onclick="document.getElementById('notaModal').remove()">Cancelar</button>
+        <button class="btn bsm" style="background:var(--pu);color:#fff;border:none" onclick="saveNota('${pacienteId}')">💾 Guardar nota</button>
+      </div>
+    </div>`;
+  document.body.appendChild(m);
+  setTimeout(()=>{const ta=document.getElementById('notaTexto');if(ta)ta.focus();},100);
+}
+
+// Guarda la nueva nota en el objeto paciente → IDB
+async function saveNota(pacienteId){
+  const texto=(document.getElementById('notaTexto').value||'').trim();
+  const fecha=document.getElementById('notaFecha').value;
+  const tipo=document.getElementById('notaTipo').value;
+
+  if(!texto){tst('La nota no puede estar vacía','er');return;}
+  if(!fecha){tst('Selecciona una fecha','er');return;}
+
+  const p=DB.find(x=>x.id===pacienteId);
+  if(!p)return;
+
+  const nota={
+    id:'n_'+Date.now()+'_'+Math.random().toString(36).slice(2,5),
+    fecha:new Date(fecha+'T'+new Date().toTimeString().slice(0,5)).toISOString(),
+    tipo,
+    texto
+  };
+
+  p.notas=p.notas||[];
+  p.notas.push(nota);
+  p.updatedAt=new Date().toISOString();
+
+  try{
+    await idb.put(p);
+    const i=DB.findIndex(x=>x.id===pacienteId);
+    if(i>=0)DB[i]=p;
+  }catch(e){console.error('IDB nota error:',e);}
+
+  // Cerrar modal y refrescar lista de notas sin cerrar el modal de paciente
+  document.getElementById('notaModal').remove();
+  const el=document.getElementById('notasList_'+pacienteId);
+  if(el)el.innerHTML=buildNotasHTML(p);
+  // Actualizar contador en cabecera
+  const hdr=el?el.closest('[style*="border:1px solid var(--border2)"]'):null;
+  if(hdr){
+    const cnt=hdr.querySelector('.xs.c3');
+    if(cnt)cnt.textContent=`${p.notas.length} nota${p.notas.length!==1?'s':''}`;
+  }
+  tst('Nota guardada ✓','ok');
+}
+
+// Elimina una nota por id
+async function deleteNota(pacienteId, notaId){
+  if(!confirm('¿Eliminar esta nota? No se puede deshacer.'))return;
+  const p=DB.find(x=>x.id===pacienteId);
+  if(!p)return;
+  p.notas=(p.notas||[]).filter(n=>n.id!==notaId);
+  p.updatedAt=new Date().toISOString();
+  try{
+    await idb.put(p);
+    const i=DB.findIndex(x=>x.id===pacienteId);
+    if(i>=0)DB[i]=p;
+  }catch(e){console.error('IDB del nota error:',e);}
+  const el=document.getElementById('notasList_'+pacienteId);
+  if(el)el.innerHTML=buildNotasHTML(p);
+  const hdr=el?el.closest('[style*="border:1px solid var(--border2)"]'):null;
+  if(hdr){
+    const cnt=hdr.querySelector('.xs.c3');
+    if(cnt)cnt.textContent=`${p.notas.length} nota${p.notas.length!==1?'s':''}`;
+  }
+  tst('Nota eliminada','er');
+}
+
 // ═══════════════════════════════════════════════
 // ADJUNTOS CLÍNICOS
 // ═══════════════════════════════════════════════
@@ -2873,7 +3142,11 @@ function bRpt(p,type){
     body+=`<div class="rs"><h3>3. Diagnóstico</h3>${row('Patología',dxL[p.dx]||'—')}${row('Fecha diagnóstico',p.fechaDx?new Date(p.fechaDx).toLocaleDateString('es'):'—')}${row('Método',p.metodoDx)}${(p.dx==='endometriosis'||p.dx==='ambas')?row('Estadio rASRM',p.asrm?'Estadio '+p.asrm:'—')+row('Localización',(p.locEndo||[]).join(', '))+row('Adenomiosis',p.adenomiosis):''}${(p.dx==='miomas'||p.dx==='ambas')?row('Tipo FIGO','Tipo '+(p.figo||'?'))+row('N.º miomas',p.numMiomas)+row('Tamaño mayor',p.tamMioma?p.tamMioma+' mm':'—')+row('Hgb',p.hgb?p.hgb+' g/dL':'—')+row('AMH',p.amh?p.amh+' ng/mL':'—'):''}${row('Notas',p.notesDx)}</div>`;
   }
   if(type==='clinico'||type==='tx'){
-    body+=`<div class="rs"><h3>${type==='tx'?'1':'4'}. Tratamiento</h3>${row('Estado',p.estadoTx)}${row('Tratamiento médico',(p.txMed||[]).join(', '))}${row('Cirugías',(p.txQx||[]).join(', '))}${row('Respuesta',p.respTx)}${row('Próxima revisión',p.proxRev?new Date(p.proxRev).toLocaleDateString('es'):'—')}${p.planTx?`<div style="margin-top:8px;padding:10px;background:var(--bg3);border-radius:6px;font-size:12.5px"><strong>Plan:</strong> ${p.planTx}</div>`:''}</div>`;
+    const mcRpt2=(p.medConc||[]).join(', ')+(p.medConcTxt?((p.medConc||[]).length?'; ':'')+p.medConcTxt:'');
+    const usaGnRH2=(p.txMed||[]).some(t=>GNRH_ANT.includes(t));
+    const warnsMC2=usaGnRH2?(p.medConc||[]).filter(m=>MC_INTERACTIONS[m]):[];
+    const interRpt2=warnsMC2.length?'⚠ Interacciones potenciales con antagonistas GnRH: '+warnsMC2.map(m=>m+' (nivel '+MC_INTERACTIONS[m].nivel+')').join(', '):'';
+    body+=`<div class="rs"><h3>${type==='tx'?'1':'4'}. Tratamiento</h3>${row('Estado',p.estadoTx)}${row('Tratamiento médico',(p.txMed||[]).join(', '))}${row('Cirugías',(p.txQx||[]).join(', '))}${row('Respuesta',p.respTx)}${row('Próxima revisión',p.proxRev?new Date(p.proxRev).toLocaleDateString('es'):'—')}${mcRpt2?row('Medicación concomitante',mcRpt2):''}${interRpt2?`<div style="margin-top:5px;padding:6px 9px;background:rgba(232,152,48,.1);border:1px solid rgba(232,152,48,.3);border-radius:6px;font-size:12px;color:var(--or)">${interRpt2}</div>`:''}${p.planTx?`<div style="margin-top:8px;padding:10px;background:var(--bg3);border-radius:6px;font-size:12.5px"><strong>Plan:</strong> ${p.planTx}</div>`:''}</div>`;
   }
   if((type==='clinico'||type==='fert')&&p.deseoGestacion!=='no'){
     body+=`<div class="rs"><h3>${type==='fert'?'1':'5'}. Fertilidad</h3>${row('Deseo gestacional',p.deseoGestacion==='si'?'Inmediato':'Futuro')}${row('Tiempo infertilidad',p.tiempoInf?p.tiempoInf+' meses':'—')}${row('Factor masculino',p.factorMasc)}${row('Permeabilidad tubárica',p.permTub)}${row('EFI estimado',p.efi?p.efi+'/10':'—')}${row('TRA',p.tra)}${row('Ciclos FIV',p.ciclosFIV||'0')}${row('AMH',p.amh?p.amh+' ng/mL':'—')}</div>`;
@@ -2888,11 +3161,25 @@ function bRpt(p,type){
       <br><p>Se solicita valoración según guías ESHRE 2022 / SEGO 2025.</p>
     </div></div>`;
   }
+  // Notas de visita en informe completo
+  if(type==='clinico'&&p.notas&&p.notas.length){
+    const notasOrden=[...p.notas].sort((a,b)=>new Date(b.fecha)-new Date(a.fecha));
+    body+=`<div class="rs"><h3>6. Notas de Visita</h3>`;
+    notasOrden.forEach((n,i)=>{
+      const d=new Date(n.fecha).toLocaleDateString('es',{day:'numeric',month:'long',year:'numeric'});
+      body+=`<div style="margin-bottom:9px;padding:8px 10px;background:var(--bg3);border-radius:6px;border-left:3px solid var(--pu)">`;
+      body+=`<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px"><span class="xs f6" style="color:var(--pu)">${d}</span>${n.tipo?`<span style="font-size:10px;background:rgba(112,96,240,.15);color:var(--pu);padding:1px 6px;border-radius:99px;font-weight:600">${n.tipo}</span>`:''}</div>`;
+      body+=`<div style="font-size:12.5px;white-space:pre-wrap">${n.texto.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>`;
+      body+=`</div>`;
+    });
+    body+=`</div>`;
+  }
+
   // Historial en informe completo
   if(type==='clinico'&&p.historial&&p.historial.length>1){
     const hist=[...p.historial].sort((a,b)=>new Date(b.fecha)-new Date(a.fecha));
     const rh=(k,v)=>v?`<div class="rr"><span class="rk">${k}</span><span class="rv">${v}</span></div>`:'';
-    body+=`<div class="rs"><h3>${type==='clinico'?'6':''} Historial de Seguimiento</h3>`;
+    body+=`<div class="rs"><h3>${type==='clinico'?(p.notas&&p.notas.length?'7':'6'):''} Historial de Seguimiento</h3>`;
     hist.forEach((s,i)=>{
       const d=new Date(s.fecha).toLocaleDateString('es',{day:'numeric',month:'long',year:'numeric'});
       body+=`<div style="margin-bottom:10px;padding:8px;background:var(--bg3);border-radius:6px;border-left:3px solid var(--pk)">`;
@@ -3049,7 +3336,10 @@ function buildCSVRow(p,sep,cols){
       escCSV(p.figo),escCSV(p.numMiomas),escCSV(p.tamMioma),escCSV(p.distorsion));
   }
   if(cols.includes('Tratamiento')){
-    row.push(escCSV(p.estadoTx),escCSV(p.txMed),escCSV(p.txQx),escCSV(p.respTx),escCSV(p.proxRev));
+    const mcCsv=(p.medConc||[]).join(' | ')+(p.medConcTxt?(' | '+p.medConcTxt):'');
+    const usaGnRHCsv=(p.txMed||[]).some(t=>GNRH_ANT.includes(t));
+    const interCsv=usaGnRHCsv?(p.medConc||[]).filter(m=>MC_INTERACTIONS[m]).map(m=>m+'('+MC_INTERACTIONS[m].nivel+')').join(' | '):'';
+    row.push(escCSV(p.estadoTx),escCSV(p.txMed),escCSV(p.txQx),escCSV(p.respTx),escCSV(p.proxRev),escCSV(mcCsv),escCSV(interCsv));
   }
   if(cols.includes('Fertilidad')){
     row.push(escCSV(p.tiempoInf),escCSV(p.efi),escCSV(p.factorMasc),escCSV(p.permTub),escCSV(p.tra),escCSV(p.ciclosFIV));
@@ -3069,7 +3359,7 @@ function buildCSVHeader(sep,cols){
   if(cols.includes('Diagnóstico'))
     h.push('Diagnostico','Fecha_Dx','Estadio_rASRM','Metodo_Dx','Localizacion_Endo','Tam_Endometrioma_mm','Adenomiosis','FIGO_Mioma','Num_Miomas','Tam_Mayor_Mioma_mm','Distorsion_Cavidad');
   if(cols.includes('Tratamiento'))
-    h.push('Estado_Tx','Tto_Medico','Cirugia','Respuesta_Tx','Proxima_Revision');
+    h.push('Estado_Tx','Tto_Medico','Cirugia','Respuesta_Tx','Proxima_Revision','Med_Concomitante','Interacciones_GnRH');
   if(cols.includes('Fertilidad'))
     h.push('Tiempo_Infertilidad_m','EFI','Factor_Masculino','Permeabilidad_Tubarica','TRA','Ciclos_FIV');
   if(cols.includes('Laboratorio'))
@@ -3358,7 +3648,12 @@ document.addEventListener('DOMContentLoaded',async()=>{
     fCard.addEventListener('input',()=>requestAnimationFrame(uTabBadges));
     fCard.addEventListener('change',()=>requestAnimationFrame(uTabBadges));
     fCard.addEventListener('click',e=>{
-      if(e.target.classList.contains('chip'))requestAnimationFrame(uTabBadges);
+      if(e.target.classList.contains('chip')){
+        requestAnimationFrame(uTabBadges);
+        // Comprobar interacciones al cambiar chips de tx médico o medConc
+        const inTx=e.target.closest('#cTM')||e.target.closest('#cMC');
+        if(inTx) setTimeout(()=>checkMedInteractions(gC('cTM'),gC('cMC')),0);
+      }
     });
   }
 
