@@ -1,8 +1,8 @@
 {
-  "name": "GinecoApp Pro",
+  "name": "GineApp Pro",
   "short_name": "GinecoApp",
   "description": "Gestión clínica de endometriosis y miomas — ESHRE 2022 · SEGO 2025",
-  "start_url": "./gineapp.html",
+  "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#0d0e14",
   "theme_color": "#c462a4",
