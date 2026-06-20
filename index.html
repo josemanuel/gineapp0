@@ -2178,7 +2178,8 @@ function gD(){
     createdAt:eId?(DB.find(p=>p.id===eId)||{}).createdAt||new Date().toISOString():new Date().toISOString(),
     updatedAt:new Date().toISOString(),
     historial:eId?(DB.find(p=>p.id===eId)||{}).historial||[]:[],
-    notas:eId?(DB.find(p=>p.id===eId)||{}).notas||[]:[]
+    notas:eId?(DB.find(p=>p.id===eId)||{}).notas||[]:[],
+    enfermeria:eId?(DB.find(p=>p.id===eId)||{}).enfermeria||[]:[]
   };
 }
 function fillF(p){
@@ -2596,6 +2597,18 @@ function bCard(p){
       ${buildNotasHTML(p)}
     </div>
   </div>
+  <div style="border:1px solid var(--border2);border-radius:var(--r2);overflow:hidden;margin-top:14px">
+    <div style="background:rgba(61,186,148,.08);padding:8px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:8px">
+      <div style="display:flex;align-items:center;gap:7px">
+        <div style="font-size:11.5px;font-weight:700;color:var(--gr)">🩺 ENFERMERÍA</div>
+        <div class="xs c3">${(p.enfermeria||[]).length} valoración${(p.enfermeria||[]).length!==1?'es':''}</div>
+      </div>
+      <button class="btn bsm" style="font-size:11px;padding:4px 10px;background:var(--gr);color:#fff;border:none" onclick="openEnfModal('${p.id}')">+ Nueva valoración</button>
+    </div>
+    <div id="enfList_${p.id}" style="padding:8px 12px">
+      ${buildEnfHTML(p)}
+    </div>
+  </div>
   <div id="ctxPanel" style="margin-top:14px"></div>
   <div class="xs c3" style="margin-top:12px;padding-top:8px;border-top:1px solid var(--border)">📅 Registrado: ${created}${updated}</div>`;
 }
@@ -2730,6 +2743,376 @@ async function deleteNota(pacienteId, notaId){
     if(cnt)cnt.textContent=`${p.notas.length} nota${p.notas.length!==1?'s':''}`;
   }
   tst('Nota eliminada','er');
+}
+
+// ═══════════════════════════════════════════════
+// VALORACIÓN DE ENFERMERÍA — PATRONES DE GORDON + NANDA/NIC/NOC
+// ═══════════════════════════════════════════════
+
+// 11 Patrones funcionales de Marjory Gordon, con hallazgos frecuentes en endometriosis/miomas
+const GORDON_PATRONES = [
+  {key:'p1', nombre:'Percepción–manejo de la salud', icon:'🏥',
+    chips:['Demora diagnóstica prolongada','Automedicación habitual','Baja adherencia al tratamiento','Desconocimiento de la enfermedad','Búsqueda activa de información','Tabaquismo','Consumo de alcohol']},
+  {key:'p2', nombre:'Nutricional–metabólico', icon:'🍽️',
+    chips:['Náuseas asociadas al dolor','Distensión abdominal','Intolerancias alimentarias','Pérdida de peso no intencionada','Sobrepeso/obesidad','Anemia ferropénica','Suplementación vitamínica']},
+  {key:'p3', nombre:'Eliminación', icon:'🚻',
+    chips:['Disquecia','Estreñimiento','Diarrea catamenial','Disuria','Urgencia miccional','Hematuria cíclica','Tenesmo rectal']},
+  {key:'p4', nombre:'Actividad–ejercicio', icon:'🏃',
+    chips:['Fatiga crónica','Limitación funcional por dolor','Sedentarismo secundario','Abandono de actividad física previa','Disnea de esfuerzo (si afectación torácica)']},
+  {key:'p5', nombre:'Sueño–descanso', icon:'😴',
+    chips:['Insomnio por dolor nocturno','Despertares frecuentes','Sueño no reparador','Uso de hipnóticos','Fatiga diurna']},
+  {key:'p6', nombre:'Cognitivo–perceptivo', icon:'🧠',
+    chips:['Dificultad de concentración','Catastrofización del dolor','Buen conocimiento de su proceso','Dudas sobre el tratamiento','Dificultad para verbalizar el dolor']},
+  {key:'p7', nombre:'Autopercepción–autoconcepto', icon:'🪞',
+    chips:['Baja autoestima','Sentimiento de cuerpo "que falla"','Frustración por el diagnóstico tardío','Afrontamiento positivo','Sensación de pérdida de control']},
+  {key:'p8', nombre:'Rol–relaciones', icon:'👥',
+    chips:['Aislamiento social','Conflictos de pareja asociados','Buen apoyo familiar','Repercusión laboral/absentismo','Sobrecarga del cuidador','Apoyo de pareja presente']},
+  {key:'p9', nombre:'Sexualidad–reproducción', icon:'❤️',
+    chips:['Dispareunia','Evitación de relaciones sexuales','Preocupación por fertilidad','Disminución de la libido','Buena comunicación sexual con la pareja']},
+  {key:'p10', nombre:'Adaptación–tolerancia al estrés', icon:'🌿',
+    chips:['Ansiedad','Síntomas depresivos','Estrategias de afrontamiento eficaces','Sensación de desesperanza','Búsqueda de apoyo psicológico','Irritabilidad']},
+  {key:'p11', nombre:'Valores–creencias', icon:'🕊️',
+    chips:['Creencias que dificultan el tratamiento','Apoyo espiritual/religioso percibido','Preferencias terapéuticas claras','Conflicto entre creencias y tratamiento propuesto']}
+];
+
+// Catálogo NANDA reducido a diagnósticos más relevantes en endometriosis/miomas
+const NANDA_CATALOGO = [
+  {id:'00132', nombre:'Dolor agudo', dominio:'Confort'},
+  {id:'00133', nombre:'Dolor crónico', dominio:'Confort'},
+  {id:'00146', nombre:'Ansiedad', dominio:'Afrontamiento/tolerancia al estrés'},
+  {id:'00148', nombre:'Temor', dominio:'Afrontamiento/tolerancia al estrés'},
+  {id:'00120', nombre:'Baja autoestima situacional', dominio:'Autopercepción'},
+  {id:'00126', nombre:'Conocimientos deficientes', dominio:'Percepción/cognición'},
+  {id:'00059', nombre:'Disfunción sexual', dominio:'Sexualidad'},
+  {id:'00126b', nombre:'Patrón sexual inefectivo', dominio:'Sexualidad'},
+  {id:'00198', nombre:'Trastorno del patrón del sueño', dominio:'Sueño/reposo'},
+  {id:'00093', nombre:'Fatiga', dominio:'Actividad/reposo'},
+  {id:'00011', nombre:'Estreñimiento', dominio:'Eliminación e intercambio'},
+  {id:'00016', nombre:'Deterioro de la eliminación urinaria', dominio:'Eliminación e intercambio'},
+  {id:'00053', nombre:'Aislamiento social', dominio:'Rol/relaciones'},
+  {id:'00069', nombre:'Afrontamiento inefectivo', dominio:'Afrontamiento/tolerancia al estrés'},
+  {id:'00126c', nombre:'Disposición para mejorar el afrontamiento', dominio:'Afrontamiento/tolerancia al estrés'}
+];
+
+// NIC (intervenciones) sugeridas por diagnóstico NANDA — catálogo reducido y orientado
+const NIC_POR_DX = {
+  '00132':['Manejo del dolor','Administración de analgésicos','Aplicación de calor/frío'],
+  '00133':['Manejo del dolor crónico','Enseñanza: medicamentos prescritos','Apoyo emocional','Derivación a unidad del dolor'],
+  '00146':['Disminución de la ansiedad','Técnicas de relajación','Apoyo emocional'],
+  '00148':['Disminución de la ansiedad','Potenciación de la seguridad','Escucha activa'],
+  '00120':['Potenciación de la autoestima','Asesoramiento','Apoyo emocional'],
+  '00126':['Enseñanza: proceso de enfermedad','Enseñanza: medicamentos prescritos','Facilitar el aprendizaje'],
+  '00059':['Asesoramiento sexual','Potenciación de la autoestima','Derivación a especialista'],
+  '00126b':['Asesoramiento sexual','Enseñanza sexualidad'],
+  '00198':['Mejora del sueño','Manejo de la medicación','Enseñanza: actividad/ejercicio prescrito'],
+  '00093':['Manejo de la energía','Fomento del ejercicio','Enseñanza: actividad/ejercicio prescrito'],
+  '00011':['Manejo del estreñimiento/impactación','Enseñanza dietética','Manejo de la nutrición'],
+  '00016':['Cuidados de la retención urinaria','Entrenamiento de hábitos urinarios'],
+  '00053':['Potenciación de la socialización','Fomento de la implicación familiar'],
+  '00069':['Apoyo en la toma de decisiones','Potenciación de la disposición de aprendizaje','Asesoramiento'],
+  '00126c':['Potenciación de la disposición de aprendizaje','Apoyo emocional']
+};
+
+// NOC (resultados esperados) sugeridos por diagnóstico NANDA
+const NOC_POR_DX = {
+  '00132':'Control del dolor',
+  '00133':'Nivel del dolor',
+  '00146':'Nivel de ansiedad',
+  '00148':'Autocontrol del miedo',
+  '00120':'Autoestima',
+  '00126':'Conocimiento: proceso de la enfermedad',
+  '00059':'Funcionamiento sexual',
+  '00126b':'Identidad sexual',
+  '00198':'Sueño',
+  '00093':'Nivel de fatiga',
+  '00011':'Eliminación intestinal',
+  '00016':'Eliminación urinaria',
+  '00053':'Implicación social',
+  '00069':'Afrontamiento de problemas',
+  '00126c':'Afrontamiento de problemas'
+};
+
+function gidEnf(){return'enf_'+Date.now()+'_'+Math.random().toString(36).slice(2,5);}
+
+// Renderiza la lista de valoraciones de enfermería de una paciente
+function buildEnfHTML(p){
+  const lista=(p.enfermeria||[]).slice().sort((a,b)=>new Date(b.fecha)-new Date(a.fecha));
+  if(!lista.length){
+    return'<div class="xs c3" style="padding:8px 0;text-align:center">Sin valoraciones de enfermería · Usa «+ Nueva valoración» para iniciar el registro</div>';
+  }
+  return lista.map((v,i)=>{
+    const d=new Date(v.fecha);
+    const dStr=d.toLocaleDateString('es',{day:'numeric',month:'short',year:'numeric'});
+    const isInicial=i===lista.length-1;
+    const patronesActivos=GORDON_PATRONES.filter(gp=>{
+      const pat=v.patrones&&v.patrones[gp.key];
+      return pat&&((pat.chips&&pat.chips.length)||pat.texto);
+    });
+    const dxCount=(v.diagnosticos||[]).length;
+    return`<div style="padding:8px 0;border-bottom:1px solid var(--border)">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:5px">
+        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+          <span class="xs f6" style="color:var(--gr)">${dStr}</span>
+          ${isInicial?'<span class="tag tg" style="font-size:9px">Inicial</span>':'<span class="tag tgr" style="font-size:9px">Seguimiento</span>'}
+        </div>
+        <div style="display:flex;gap:5px;flex-shrink:0">
+          <button class="btn bs bsm" style="font-size:11px;padding:3px 8px" onclick="viewEnfDetail('${p.id}','${v.id}')" title="Ver detalle">👁 Ver</button>
+          <button class="btn bg bsm" style="font-size:11px;padding:3px 7px;color:var(--rd)" onclick="deleteEnf('${p.id}','${v.id}')" title="Eliminar">🗑</button>
+        </div>
+      </div>
+      <div class="xs c2">${patronesActivos.length} patrón${patronesActivos.length!==1?'es':''} con hallazgos · ${dxCount} diagnóstico${dxCount!==1?'s':''} NANDA</div>
+      ${dxCount?`<div style="display:flex;flex-wrap:wrap;gap:3px;margin-top:4px">${(v.diagnosticos||[]).slice(0,3).map(d=>`<span class="tag tg" style="font-size:9.5px">${d.nombre}</span>`).join('')}${dxCount>3?`<span class="xs c3">+${dxCount-3} más</span>`:''}</div>`:''}
+    </div>`;
+  }).join('') + `<div class="xs c3" style="padding-top:6px;text-align:right">${lista.length} valoración${lista.length!==1?'es':''} registrada${lista.length!==1?'s':''}</div>`;
+}
+
+// ── Modal de nueva valoración de enfermería ──
+function openEnfModal(pacienteId){
+  let existing=document.getElementById('enfModal');
+  if(existing)existing.remove();
+
+  const today=new Date().toISOString().slice(0,10);
+  const hayPrevia=(()=>{const p=DB.find(x=>x.id===pacienteId);return p&&(p.enfermeria||[]).length>0;})();
+
+  const m=document.createElement('div');
+  m.id='enfModal';
+  m.style.cssText='position:fixed;inset:0;z-index:500;background:rgba(0,0,0,.7);display:flex;align-items:center;justify-content:center;padding:12px';
+
+  // Construir bloques de patrones
+  const patronesHTML=GORDON_PATRONES.map(gp=>`
+    <div style="border-left:3px solid var(--gr);padding-left:10px;margin-bottom:13px">
+      <div class="xs f6 cg mb2" style="text-transform:uppercase;letter-spacing:.6px">${gp.icon} ${gp.nombre}</div>
+      <div class="chips mb2" id="enfChips_${gp.key}">
+        ${gp.chips.map(ch=>`<div class="chip" onclick="ck(this)" style="font-size:11px">${ch}</div>`).join('')}
+      </div>
+      <input class="fc" id="enfTexto_${gp.key}" placeholder="Observaciones adicionales (opcional)" style="font-size:12px;padding:6px 9px">
+    </div>`).join('');
+
+  // Construir selector NANDA con NIC/NOC dinámico
+  const nandaChips=NANDA_CATALOGO.map(n=>`<div class="chip" onclick="toggleNanda(this,'${n.id}')" data-nanda="${n.id}" style="font-size:11px">${n.nombre}</div>`).join('');
+
+  m.innerHTML=`
+    <div style="background:var(--card);border:1px solid var(--border2);border-radius:var(--r);max-width:680px;width:100%;max-height:92vh;overflow-y:auto;box-shadow:var(--shadow)">
+      <div style="padding:13px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:var(--card);z-index:5">
+        <div style="font-weight:700;font-size:15px;color:var(--gr)">🩺 Nueva valoración de enfermería ${hayPrevia?'(seguimiento)':'(inicial)'}</div>
+        <button class="btn bic bg" onclick="document.getElementById('enfModal').remove()">✕</button>
+      </div>
+      <div style="padding:16px 18px">
+        <div class="fg mb3"><label class="fl">Fecha de valoración</label><input type="date" id="enfFecha" class="fc" value="${today}" style="max-width:200px"></div>
+
+        <h2 style="font-size:13px;font-weight:700;margin:6px 0 12px;color:var(--text)">📋 Valoración por patrones funcionales (M. Gordon)</h2>
+        ${patronesHTML}
+
+        <hr class="div">
+        <h2 style="font-size:13px;font-weight:700;margin:14px 0 8px;color:var(--text)">🏷️ Diagnósticos de enfermería (NANDA)</h2>
+        <div class="box bi2 mb2" style="font-size:11px">Selecciona los diagnósticos aplicables. Por cada uno podrás indicar "relacionado con" / "manifestado por" y se sugerirán automáticamente intervenciones (NIC) y resultados esperados (NOC).</div>
+        <div class="chips mb3" id="enfNandaChips">${nandaChips}</div>
+        <div id="enfDxDetalle"></div>
+
+        <div class="fg mt3"><label class="fl">Nota general de la valoración</label><textarea id="enfNotaGeneral" class="fc" style="min-height:70px" placeholder="Resumen, impresión global, plan de seguimiento de enfermería…"></textarea></div>
+      </div>
+      <div style="padding:11px 18px;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end;position:sticky;bottom:0;background:var(--card)">
+        <button class="btn bs bsm" onclick="document.getElementById('enfModal').remove()">Cancelar</button>
+        <button class="btn bsm" style="background:var(--gr);color:#fff;border:none" onclick="saveEnf('${pacienteId}')">💾 Guardar valoración</button>
+      </div>
+    </div>`;
+  document.body.appendChild(m);
+}
+
+// Estado temporal de diagnósticos NANDA seleccionados en el modal abierto
+let _enfDxSel={};
+
+function toggleNanda(el,nandaId){
+  el.classList.toggle('on');
+  const dxDetalle=document.getElementById('enfDxDetalle');
+  if(el.classList.contains('on')){
+    const n=NANDA_CATALOGO.find(x=>x.id===nandaId);
+    _enfDxSel[nandaId]={relacionado:'',manifestado:''};
+    const nic=(NIC_POR_DX[nandaId]||[]).join(', ');
+    const noc=NOC_POR_DX[nandaId]||'';
+    const block=document.createElement('div');
+    block.id='enfDx_'+nandaId;
+    block.style.cssText='border:1px solid var(--border2);border-radius:var(--r2);padding:10px 12px;margin-bottom:8px;background:var(--bg3)';
+    block.innerHTML=`
+      <div class="f6 sm mb2" style="color:var(--gr)">${n.nombre} <span class="xs c3">(${n.dominio})</span></div>
+      <div class="fr2 mb2">
+        <div class="fg" style="margin-bottom:0"><label class="fl" style="font-size:10.5px">Relacionado con</label><input class="fc" id="enfRel_${nandaId}" placeholder="Factor relacionado…" style="font-size:11.5px;padding:5px 8px"></div>
+        <div class="fg" style="margin-bottom:0"><label class="fl" style="font-size:10.5px">Manifestado por</label><input class="fc" id="enfMan_${nandaId}" placeholder="Signos/síntomas…" style="font-size:11.5px;padding:5px 8px"></div>
+      </div>
+      <div class="xs c2" style="margin-bottom:3px"><strong style="color:var(--pu)">NIC sugeridas:</strong> ${nic||'—'}</div>
+      <div class="xs c2"><strong style="color:var(--or)">NOC sugerido:</strong> ${noc||'—'}</div>`;
+    dxDetalle.appendChild(block);
+  } else {
+    delete _enfDxSel[nandaId];
+    const block=document.getElementById('enfDx_'+nandaId);
+    if(block)block.remove();
+  }
+}
+
+// Guarda la valoración completa, solo si hay cambios respecto a la anterior
+async function saveEnf(pacienteId){
+  const p=DB.find(x=>x.id===pacienteId);
+  if(!p)return;
+
+  const fecha=document.getElementById('enfFecha').value;
+  if(!fecha){tst('Selecciona una fecha','er');return;}
+
+  // Recoger patrones
+  const patrones={};
+  GORDON_PATRONES.forEach(gp=>{
+    const chips=[...document.querySelectorAll('#enfChips_'+gp.key+' .chip.on')].map(c=>c.textContent.trim());
+    const texto=(document.getElementById('enfTexto_'+gp.key).value||'').trim();
+    if(chips.length||texto){patrones[gp.key]={chips,texto};}
+  });
+
+  // Recoger diagnósticos NANDA con NIC/NOC
+  const diagnosticos=Object.keys(_enfDxSel).map(nandaId=>{
+    const n=NANDA_CATALOGO.find(x=>x.id===nandaId);
+    const relEl=document.getElementById('enfRel_'+nandaId);
+    const manEl=document.getElementById('enfMan_'+nandaId);
+    return{
+      nandaId, nombre:n.nombre, dominio:n.dominio,
+      relacionadoCon:relEl?relEl.value.trim():'',
+      manifestadoPor:manEl?manEl.value.trim():'',
+      nic:NIC_POR_DX[nandaId]||[],
+      noc:NOC_POR_DX[nandaId]||''
+    };
+  });
+
+  const notaGeneral=(document.getElementById('enfNotaGeneral').value||'').trim();
+
+  if(!Object.keys(patrones).length&&!diagnosticos.length&&!notaGeneral){
+    tst('La valoración está vacía — registra al menos un hallazgo','er');
+    return;
+  }
+
+  const nueva={
+    id:gidEnf(),
+    fecha:new Date(fecha+'T'+new Date().toTimeString().slice(0,5)).toISOString(),
+    patrones, diagnosticos, notaGeneral
+  };
+
+  // Solo registrar si hay cambios respecto a la valoración anterior
+  const previas=(p.enfermeria||[]).slice().sort((a,b)=>new Date(b.fecha)-new Date(a.fecha));
+  const anterior=previas[0];
+  if(anterior&&!hasEnfChange(anterior,nueva)){
+    document.getElementById('enfModal').remove();
+    tst('Sin cambios respecto a la valoración anterior — no se ha registrado una nueva entrada','in');
+    _enfDxSel={};
+    return;
+  }
+
+  p.enfermeria=p.enfermeria||[];
+  p.enfermeria.push(nueva);
+  p.updatedAt=new Date().toISOString();
+
+  try{
+    await idb.put(p);
+    const i=DB.findIndex(x=>x.id===pacienteId);
+    if(i>=0)DB[i]=p;
+  }catch(e){console.error('IDB enfermería error:',e);}
+
+  document.getElementById('enfModal').remove();
+  _enfDxSel={};
+  const el=document.getElementById('enfList_'+pacienteId);
+  if(el)el.innerHTML=buildEnfHTML(p);
+  tst('Valoración de enfermería guardada ✓','ok');
+}
+
+// Compara dos valoraciones para decidir si hay cambio clínico relevante
+function hasEnfChange(prev,next){
+  // Comparar patrones (chips + texto)
+  const keysAll=new Set([...Object.keys(prev.patrones||{}),...Object.keys(next.patrones||{})]);
+  for(const k of keysAll){
+    const a=prev.patrones&&prev.patrones[k]||{chips:[],texto:''};
+    const b=next.patrones&&next.patrones[k]||{chips:[],texto:''};
+    const chipsA=JSON.stringify([...(a.chips||[])].sort());
+    const chipsB=JSON.stringify([...(b.chips||[])].sort());
+    if(chipsA!==chipsB)return true;
+    if((a.texto||'')!==(b.texto||''))return true;
+  }
+  // Comparar diagnósticos NANDA (por id)
+  const dxA=JSON.stringify((prev.diagnosticos||[]).map(d=>d.nandaId).sort());
+  const dxB=JSON.stringify((next.diagnosticos||[]).map(d=>d.nandaId).sort());
+  if(dxA!==dxB)return true;
+  // Comparar relacionado con / manifestado por dentro de cada diagnóstico común
+  for(const d of(next.diagnosticos||[])){
+    const prevDx=(prev.diagnosticos||[]).find(x=>x.nandaId===d.nandaId);
+    if(prevDx&&(prevDx.relacionadoCon!==d.relacionadoCon||prevDx.manifestadoPor!==d.manifestadoPor))return true;
+  }
+  if((prev.notaGeneral||'')!==(next.notaGeneral||''))return true;
+  return false;
+}
+
+// Ver el detalle completo de una valoración en un modal de solo lectura
+function viewEnfDetail(pacienteId,enfId){
+  const p=DB.find(x=>x.id===pacienteId);
+  if(!p)return;
+  const v=(p.enfermeria||[]).find(x=>x.id===enfId);
+  if(!v)return;
+
+  let existing=document.getElementById('enfViewModal');
+  if(existing)existing.remove();
+
+  const d=new Date(v.fecha).toLocaleDateString('es',{day:'numeric',month:'long',year:'numeric'});
+
+  const patronesHTML=GORDON_PATRONES.filter(gp=>v.patrones&&v.patrones[gp.key]).map(gp=>{
+    const pat=v.patrones[gp.key];
+    return`<div style="border-left:3px solid var(--gr);padding-left:10px;margin-bottom:10px">
+      <div class="xs f6 cg mb1">${gp.icon} ${gp.nombre}</div>
+      ${pat.chips&&pat.chips.length?`<div style="display:flex;flex-wrap:wrap;gap:3px;margin-bottom:3px">${pat.chips.map(c=>`<span class="tag tg" style="font-size:10px">${c}</span>`).join('')}</div>`:''}
+      ${pat.texto?`<div class="xs c2">${pat.texto}</div>`:''}
+    </div>`;
+  }).join('')||'<div class="xs c3">Sin hallazgos registrados en los patrones funcionales</div>';
+
+  const dxHTML=(v.diagnosticos||[]).map(dx=>`
+    <div style="border:1px solid var(--border2);border-radius:var(--r2);padding:9px 11px;margin-bottom:7px;background:var(--bg3)">
+      <div class="f6 sm" style="color:var(--gr)">${dx.nombre} <span class="xs c3">(${dx.dominio})</span></div>
+      ${dx.relacionadoCon?`<div class="xs c2 mt2u">R/c: ${dx.relacionadoCon}</div>`:''}
+      ${dx.manifestadoPor?`<div class="xs c2">M/p: ${dx.manifestadoPor}</div>`:''}
+      ${dx.nic&&dx.nic.length?`<div class="xs" style="color:var(--pu);margin-top:4px">NIC: ${dx.nic.join(', ')}</div>`:''}
+      ${dx.noc?`<div class="xs" style="color:var(--or)">NOC: ${dx.noc}</div>`:''}
+    </div>`).join('')||'<div class="xs c3">Sin diagnósticos NANDA registrados</div>';
+
+  const m=document.createElement('div');
+  m.id='enfViewModal';
+  m.style.cssText='position:fixed;inset:0;z-index:500;background:rgba(0,0,0,.7);display:flex;align-items:center;justify-content:center;padding:12px';
+  m.innerHTML=`
+    <div style="background:var(--card);border:1px solid var(--border2);border-radius:var(--r);max-width:600px;width:100%;max-height:90vh;overflow-y:auto;box-shadow:var(--shadow)">
+      <div style="padding:13px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:var(--card)">
+        <div style="font-weight:700;font-size:14px;color:var(--gr)">🩺 Valoración de enfermería — ${d}</div>
+        <button class="btn bic bg" onclick="document.getElementById('enfViewModal').remove()">✕</button>
+      </div>
+      <div style="padding:16px 18px">
+        <h2 style="font-size:12.5px;font-weight:700;margin-bottom:10px;color:var(--text)">📋 Patrones funcionales con hallazgos</h2>
+        ${patronesHTML}
+        <hr class="div">
+        <h2 style="font-size:12.5px;font-weight:700;margin:12px 0 10px;color:var(--text)">🏷️ Diagnósticos NANDA / NIC / NOC</h2>
+        ${dxHTML}
+        ${v.notaGeneral?`<div class="box bi2 mt3"><div class="bt">📝 Nota general</div>${v.notaGeneral}</div>`:''}
+      </div>
+      <div style="padding:10px 18px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;position:sticky;bottom:0;background:var(--card)">
+        <button class="btn bs bsm" onclick="document.getElementById('enfViewModal').remove()">Cerrar</button>
+      </div>
+    </div>`;
+  document.body.appendChild(m);
+}
+
+// Elimina una valoración de enfermería
+async function deleteEnf(pacienteId,enfId){
+  if(!confirm('¿Eliminar esta valoración de enfermería? No se puede deshacer.'))return;
+  const p=DB.find(x=>x.id===pacienteId);
+  if(!p)return;
+  p.enfermeria=(p.enfermeria||[]).filter(v=>v.id!==enfId);
+  p.updatedAt=new Date().toISOString();
+  try{
+    await idb.put(p);
+    const i=DB.findIndex(x=>x.id===pacienteId);
+    if(i>=0)DB[i]=p;
+  }catch(e){console.error('IDB del enfermería error:',e);}
+  const el=document.getElementById('enfList_'+pacienteId);
+  if(el)el.innerHTML=buildEnfHTML(p);
+  tst('Valoración eliminada','er');
 }
 
 // ═══════════════════════════════════════════════
@@ -3784,10 +4167,15 @@ function bRpt(p,type){
       <br><p>Se solicita valoración según guías ESHRE 2022 / SEGO 2025.</p>
     </div></div>`;
   }
+  // Contador dinámico de secciones para el informe clínico completo (sección 5 ya usada por Fertilidad)
+  let _secNum = 5;
+  const rh = row; // alias usado en los bloques de enfermería e historial
+
   // Notas de visita en informe completo
   if(type==='clinico'&&p.notas&&p.notas.length){
+    _secNum++;
     const notasOrden=[...p.notas].sort((a,b)=>new Date(b.fecha)-new Date(a.fecha));
-    body+=`<div class="rs"><h3>6. Notas de Visita</h3>`;
+    body+=`<div class="rs"><h3>${_secNum}. Notas de Visita</h3>`;
     notasOrden.forEach((n,i)=>{
       const d=new Date(n.fecha).toLocaleDateString('es',{day:'numeric',month:'long',year:'numeric'});
       body+=`<div style="margin-bottom:9px;padding:8px 10px;background:var(--bg3);border-radius:6px;border-left:3px solid var(--pu)">`;
@@ -3798,11 +4186,47 @@ function bRpt(p,type){
     body+=`</div>`;
   }
 
+  // Valoración de enfermería en informe completo
+  if(type==='clinico'&&p.enfermeria&&p.enfermeria.length){
+    _secNum++;
+    const enfOrden=[...p.enfermeria].sort((a,b)=>new Date(b.fecha)-new Date(a.fecha));
+    body+=`<div class="rs"><h3>${_secNum}. Valoración de Enfermería</h3>`;
+    enfOrden.forEach((v,i)=>{
+      const d=new Date(v.fecha).toLocaleDateString('es',{day:'numeric',month:'long',year:'numeric'});
+      const esInicial=i===enfOrden.length-1;
+      body+=`<div style="margin-bottom:11px;padding:9px 11px;background:var(--bg3);border-radius:6px;border-left:3px solid var(--gr)">`;
+      body+=`<div class="xs f6" style="color:var(--gr);margin-bottom:5px">${esInicial?'Valoración inicial':'Seguimiento'} · ${d}</div>`;
+      // Patrones con hallazgos
+      const patronesAct=GORDON_PATRONES.filter(gp=>v.patrones&&v.patrones[gp.key]);
+      if(patronesAct.length){
+        patronesAct.forEach(gp=>{
+          const pat=v.patrones[gp.key];
+          const chipsTxt=(pat.chips||[]).join(', ');
+          const linea=[chipsTxt,pat.texto].filter(Boolean).join(' — ');
+          if(linea)body+=rh(gp.icon+' '+gp.nombre,linea);
+        });
+      }
+      // Diagnósticos NANDA/NIC/NOC
+      if(v.diagnosticos&&v.diagnosticos.length){
+        body+=`<div class="xs f6 mt2u" style="color:var(--gr)">Diagnósticos NANDA:</div>`;
+        v.diagnosticos.forEach(dx=>{
+          body+=`<div style="margin-top:3px;font-size:11.5px"><strong>${dx.nombre}</strong>`;
+          if(dx.relacionadoCon)body+=` r/c ${dx.relacionadoCon}`;
+          if(dx.manifestadoPor)body+=` m/p ${dx.manifestadoPor}`;
+          body+=`<br><span style="color:var(--text2)">NIC: ${(dx.nic||[]).join(', ')||'—'} · NOC: ${dx.noc||'—'}</span></div>`;
+        });
+      }
+      if(v.notaGeneral)body+=`<div class="xs c2 mt2u" style="font-style:italic">${v.notaGeneral}</div>`;
+      body+=`</div>`;
+    });
+    body+=`</div>`;
+  }
+
   // Historial en informe completo
   if(type==='clinico'&&p.historial&&p.historial.length>1){
+    _secNum++;
     const hist=[...p.historial].sort((a,b)=>new Date(b.fecha)-new Date(a.fecha));
-    const rh=(k,v)=>v?`<div class="rr"><span class="rk">${k}</span><span class="rv">${v}</span></div>`:'';
-    body+=`<div class="rs"><h3>${type==='clinico'?(p.notas&&p.notas.length?'7':'6'):''} Historial de Seguimiento</h3>`;
+    body+=`<div class="rs"><h3>${_secNum}. Historial de Seguimiento</h3>`;
     hist.forEach((s,i)=>{
       const d=new Date(s.fecha).toLocaleDateString('es',{day:'numeric',month:'long',year:'numeric'});
       body+=`<div style="margin-bottom:10px;padding:8px;background:var(--bg3);border-radius:6px;border-left:3px solid var(--pk)">`;
