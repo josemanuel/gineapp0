@@ -2892,6 +2892,14 @@ function buildHistorialHTML(p){
       Ver ${ocultos.length} entradas anteriores ▾
     </button>`:'';
 
+  // Datos completos para el gráfico EVA expandido (todas las entradas, orden cronológico)
+  const evaChartPts=[...hist].reverse().map(s=>({
+    fecha:s.fecha,
+    evaD:s.evaD!==undefined&&s.evaD!==''?parseFloat(s.evaD):null,
+    evaP:s.evaP!==undefined&&s.evaP!==''?parseFloat(s.evaP):null
+  }));
+  const hasEvaChart=evaChartPts.filter(d=>d.evaD!==null||d.evaP!==null).length>=2;
+
   return`
   <div style="border:1px solid var(--border2);border-radius:var(--r2);overflow:hidden;margin-top:14px">
     <div style="background:rgba(196,98,164,.08);padding:8px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px">
@@ -2900,18 +2908,115 @@ function buildHistorialHTML(p){
         <div class="xs c3">${hist.length} entrada${hist.length!==1?'s':''}</div>
         ${tendencia}
       </div>
-      <div style="display:flex;gap:12px;align-items:center">
+      <div style="display:flex;gap:12px;align-items:center;cursor:${hasEvaChart?'pointer':'default'}" ${hasEvaChart?`onclick="toggleEVAChart('${p.id}')" title="Ver gráfico EVA completo"`:''}>
         ${sparkEVA?`<div style="display:flex;flex-direction:column;align-items:center;gap:1px">
-          ${sparkEVA}<div class="xs c3" style="font-size:9px">EVA</div></div>`:''}
+          ${sparkEVA}<div class="xs c3" style="font-size:9px">EVA${hasEvaChart?' 🔍':''}</div></div>`:''}
         ${sparkHgb?`<div style="display:flex;flex-direction:column;align-items:center;gap:1px">
           ${sparkHgb}<div class="xs c3" style="font-size:9px">Hgb</div></div>`:''}
       </div>
     </div>
+    ${hasEvaChart?`<div id="evaChartBox_${p.id}" style="display:none;padding:12px;border-bottom:1px solid var(--border);background:var(--bg3)">${buildEVAChart(evaChartPts)}</div>`:''}
     <div style="padding:8px 12px">
       ${visible.map(entryHTML).join('')}
       ${ocultosHTML}
     </div>
   </div>`;
+}
+
+// Toggle del gráfico EVA expandido dentro del modal
+function toggleEVAChart(pacienteId){
+  const box=document.getElementById('evaChartBox_'+pacienteId);
+  if(!box)return;
+  box.style.display=box.style.display==='none'?'block':'none';
+}
+
+// Gráfico EVA histórico completo — SVG con ejes, grid, dos series y tooltips
+function buildEVAChart(pts){
+  const W=680,H=220;
+  const padL=32,padR=16,padT=16,padB=32;
+  const plotW=W-padL-padR,plotH=H-padT-padB;
+  const n=pts.length;
+  const maxV=10;
+
+  // Posiciones X distribuidas uniformemente (no proporcional a tiempo real, más legible con pocas visitas)
+  const xAt=i=>padL+(n===1?plotW/2:(i/(n-1))*plotW);
+  const yAt=v=>padT+plotH-(v/maxV)*plotH;
+
+  // Grid horizontal (0,2,4,6,8,10)
+  let gridLines='';
+  for(let g=0;g<=10;g+=2){
+    const y=yAt(g);
+    gridLines+=`<line x1="${padL}" y1="${y}" x2="${W-padR}" y2="${y}" stroke="var(--border)" stroke-width="1"/>`;
+    gridLines+=`<text x="${padL-6}" y="${y+3}" font-size="9" fill="var(--text3)" text-anchor="end">${g}</text>`;
+  }
+
+  // Etiquetas eje X (fecha corta) — mostrar todas si ≤8, si no cada 2ª
+  const showEvery=n<=8?1:Math.ceil(n/8);
+  let xLabels='';
+  pts.forEach((d,i)=>{
+    if(i%showEvery!==0&&i!==n-1)return;
+    const x=xAt(i);
+    const dt=new Date(d.fecha);
+    const lbl=dt.toLocaleDateString('es',{day:'numeric',month:'short'});
+    xLabels+=`<text x="${x}" y="${H-padB+14}" font-size="8.5" fill="var(--text3)" text-anchor="middle">${lbl}</text>`;
+  });
+
+  // Construir path para una serie, saltando valores null
+  function seriesPath(key){
+    let path='';
+    let started=false;
+    pts.forEach((d,i)=>{
+      const v=d[key];
+      if(v===null||isNaN(v)){started=false;return;}
+      const x=xAt(i),y=yAt(v);
+      path+=(started?'L':'M')+x.toFixed(1)+','+y.toFixed(1);
+      started=true;
+    });
+    return path;
+  }
+
+  function seriesPoints(key,color){
+    return pts.map((d,i)=>{
+      const v=d[key];
+      if(v===null||isNaN(v))return'';
+      const x=xAt(i),y=yAt(v);
+      const dt=new Date(d.fecha).toLocaleDateString('es',{day:'numeric',month:'short',year:'2-digit'});
+      return`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="3.5" fill="${color}" stroke="var(--bg)" stroke-width="1.5">
+        <title>${dt}: ${v}/10</title>
+      </circle>`;
+    }).join('');
+  }
+
+  const pathD=seriesPath('evaD');
+  const pathP=seriesPath('evaP');
+  const ptsD=seriesPoints('evaD','var(--pk)');
+  const ptsP=seriesPoints('evaP','var(--pu)');
+
+  return`
+  <div style="margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px">
+    <div class="xs f6" style="color:var(--text2)">Evolución del dolor (EVA 0–10)</div>
+    <div style="display:flex;gap:12px;font-size:10.5px">
+      <div style="display:flex;align-items:center;gap:4px"><div style="width:9px;height:9px;border-radius:50%;background:var(--pk)"></div>EVA dismenorrea</div>
+      <div style="display:flex;align-items:center;gap:4px"><div style="width:9px;height:9px;border-radius:50%;background:var(--pu)"></div>EVA dolor pélvico</div>
+    </div>
+  </div>
+  <svg width="100%" height="${H}" viewBox="0 0 ${W} ${H}" style="display:block;max-width:100%">
+    <!-- Zonas de referencia de severidad -->
+    <rect x="${padL}" y="${yAt(10)}" width="${plotW}" height="${yAt(7)-yAt(10)}" fill="var(--rd)" opacity="0.06"/>
+    <rect x="${padL}" y="${yAt(7)}" width="${plotW}" height="${yAt(4)-yAt(7)}" fill="var(--or)" opacity="0.06"/>
+    <rect x="${padL}" y="${yAt(4)}" width="${plotW}" height="${yAt(0)-yAt(4)}" fill="var(--gr)" opacity="0.06"/>
+    ${gridLines}
+    ${xLabels}
+    <!-- Línea eje Y -->
+    <line x1="${padL}" y1="${padT}" x2="${padL}" y2="${H-padB}" stroke="var(--border2)" stroke-width="1.5"/>
+    <line x1="${padL}" y1="${H-padB}" x2="${W-padR}" y2="${H-padB}" stroke="var(--border2)" stroke-width="1.5"/>
+    <!-- Series -->
+    ${pathP?`<path d="${pathP}" fill="none" stroke="var(--pu)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" opacity="0.85"/>`:''}
+    ${pathD?`<path d="${pathD}" fill="none" stroke="var(--pk)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>`:''}
+    ${ptsP}
+    ${ptsD}
+  </svg>
+  <div class="xs c3" style="text-align:center;margin-top:2px">Zonas: 🟢 0–3 leve · 🟠 4–6 moderado · 🔴 7–10 severo</div>`;
 }
 
 // Sparkline SVG inline (w=80, h=24 por defecto)
