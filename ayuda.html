@@ -238,6 +238,7 @@ kbd{
     <div class="snlbl">Nuevas funciones</div>
     <a class="sna" onclick="nav('adjuntos',this)"><span class="ico">📎</span>Adjuntos clínicos</a>
     <a class="sna" onclick="nav('notas',this)"><span class="ico">📝</span>Notas de visita</a>
+    <a class="sna" onclick="nav('enfermeria',this)"><span class="ico">🩺</span>Valoración de enfermería</a>
     <a class="sna" onclick="nav('medconc',this)"><span class="ico">💊</span>Medicación concomitante</a>
     <a class="sna" onclick="nav('ehp30',this)"><span class="ico">📋</span>EHP-30 calidad de vida</a>
     <a class="sna" onclick="nav('pwa',this)"><span class="ico">📲</span>Instalación PWA</a>
@@ -794,7 +795,65 @@ kbd{
       </div>
 
       <h2>En el informe clínico</h2>
-      <p>Las notas aparecen en el <strong>Informe Clínico Completo</strong> como sección «6. Notas de Visita» (el historial longitudinal pasa a ser la sección 7 cuando existen notas). Cada nota muestra fecha, tipo y texto completo.</p>
+      <p>Las notas aparecen en el <strong>Informe Clínico Completo</strong>. La numeración de las secciones siguientes (notas, valoración de enfermería, historial) se ajusta automáticamente según cuáles existan para esa paciente.</p>
+    </div>
+
+    <!-- VALORACIÓN DE ENFERMERÍA -->
+    <div class="section" id="s-enfermeria">
+      <div class="page-title">Valoración de enfermería</div>
+      <div class="page-sub">Módulo completo de valoración por patrones funcionales de Marjory Gordon, con diagnósticos NANDA y planificación NIC/NOC.</div>
+
+      <div class="box bi"><div class="bt">📌 Inspirado en la Guía Asturias 2025</div>El Programa de Atención Integral a la Endometriosis del Principado de Asturias contempla la valoración enfermera mediante los patrones funcionales de Gordon como parte del modelo de atención multidisciplinar. Este módulo lo incorpora a GinecoApp Pro de forma estructurada.</div>
+
+      <h2>Dónde se encuentra</h2>
+      <p>La sección <strong>🩺 ENFERMERÍA</strong> aparece en el modal de cada paciente, justo después de las notas de visita. Muestra el número de valoraciones registradas y el botón <strong>+ Nueva valoración</strong>.</p>
+
+      <h2>Los 11 patrones funcionales de Gordon</h2>
+      <p>Cada patrón combina <strong>chips de hallazgos frecuentes</strong> en endometriosis y miomas con un campo de <strong>texto libre</strong> para observaciones adicionales:</p>
+      <table class="tbl">
+        <tr><th>Patrón</th><th>Qué valora</th></tr>
+        <tr><td>🏥 Percepción–manejo de la salud</td><td>Demora diagnóstica, adherencia, automedicación, conocimiento de la enfermedad</td></tr>
+        <tr><td>🍽️ Nutricional–metabólico</td><td>Náuseas, distensión, intolerancias, peso, anemia</td></tr>
+        <tr><td>🚻 Eliminación</td><td>Disquecia, estreñimiento, disuria, hematuria cíclica</td></tr>
+        <tr><td>🏃 Actividad–ejercicio</td><td>Fatiga, limitación funcional, sedentarismo, disnea</td></tr>
+        <tr><td>😴 Sueño–descanso</td><td>Insomnio por dolor, despertares, uso de hipnóticos</td></tr>
+        <tr><td>🧠 Cognitivo–perceptivo</td><td>Concentración, catastrofización del dolor, comprensión del proceso</td></tr>
+        <tr><td>🪞 Autopercepción–autoconcepto</td><td>Autoestima, frustración, afrontamiento, sensación de control</td></tr>
+        <tr><td>👥 Rol–relaciones</td><td>Aislamiento, conflictos de pareja, apoyo familiar, repercusión laboral</td></tr>
+        <tr><td>❤️ Sexualidad–reproducción</td><td>Dispareunia, evitación sexual, preocupación por fertilidad, libido</td></tr>
+        <tr><td>🌿 Adaptación–tolerancia al estrés</td><td>Ansiedad, síntomas depresivos, estrategias de afrontamiento</td></tr>
+        <tr><td>🕊️ Valores–creencias</td><td>Creencias sobre el tratamiento, apoyo espiritual, preferencias terapéuticas</td></tr>
+      </table>
+
+      <h2>Diagnósticos de enfermería (NANDA)</h2>
+      <p>Catálogo de 15 diagnósticos NANDA más relevantes en el contexto de endometriosis y miomas (dolor agudo/crónico, ansiedad, baja autoestima, disfunción sexual, trastorno del sueño, fatiga, estreñimiento, aislamiento social, entre otros). Al seleccionar un diagnóstico, se abre un bloque para especificar:</p>
+      <ul>
+        <li><strong>Relacionado con (r/c)</strong> — el factor causal o contribuyente</li>
+        <li><strong>Manifestado por (m/p)</strong> — los signos y síntomas observados</li>
+      </ul>
+
+      <h2>Sugerencias automáticas NIC/NOC</h2>
+      <p>Por cada diagnóstico NANDA seleccionado, la app sugiere automáticamente:</p>
+      <ul>
+        <li><strong>NIC (intervenciones)</strong> — 2 a 3 intervenciones de enfermería habituales para ese diagnóstico</li>
+        <li><strong>NOC (resultado esperado)</strong> — el resultado de enfermería principal a monitorizar</li>
+      </ul>
+      <p>Estas sugerencias son orientativas; el profesional de enfermería puede adaptarlas según el plan de cuidados individualizado.</p>
+
+      <h2>Registro de seguimiento — solo si hay cambios</h2>
+      <div class="box bo"><div class="bt">✅ Comportamiento inteligente</div>Al guardar una nueva valoración, la app la compara automáticamente con la anterior. Si no hay cambios en los patrones, ni en los diagnósticos NANDA, ni en la nota general, <strong>no se crea una nueva entrada</strong> — se notifica que no hubo cambios. Esto evita duplicar valoraciones idénticas en cada visita.</div>
+      <p>La primera valoración registrada se marca como <strong>«Inicial»</strong>; las siguientes (solo si hay cambios) se marcan como <strong>«Seguimiento»</strong>.</p>
+
+      <h2>Ver y eliminar valoraciones</h2>
+      <ul>
+        <li><strong>👁 Ver</strong> — abre un modal de solo lectura con el detalle completo: todos los patrones con hallazgos, diagnósticos NANDA con su NIC/NOC y la nota general</li>
+        <li><strong>🗑 Eliminar</strong> — elimina la valoración con confirmación. La acción es irreversible</li>
+      </ul>
+
+      <h2>En el informe clínico completo</h2>
+      <p>Todas las valoraciones de enfermería aparecen en el <strong>Informe Clínico Completo</strong> en su propia sección numerada, con el detalle de patrones afectados, diagnósticos NANDA y su NIC/NOC asociado. La numeración de esta sección se ajusta automáticamente según existan o no notas de visita y valoraciones de enfermería para esa paciente.</p>
+
+      <div class="box bw"><div class="bt">⚠️ Alcance del módulo</div>Este módulo complementa el registro médico, pero no sustituye la historia de enfermería completa de un sistema de información hospitalario. Los datos se almacenan en el mismo registro de la paciente en IndexedDB.</div>
     </div>
 
     <!-- MEDICACIÓN CONCOMITANTE -->
@@ -928,6 +987,7 @@ const titles = {
   exportar:'Exportar e importar', atajos:'Atajos y gestos',
   guias:'Guías clínicas', datos:'Datos y privacidad',
   adjuntos:'Adjuntos clínicos', notas:'Notas de visita',
+  enfermeria:'Valoración de enfermería',
   medconc:'Medicación concomitante', ehp30:'EHP-30 calidad de vida',
   pwa:'Instalación PWA'
 };
