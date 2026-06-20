@@ -235,14 +235,21 @@ kbd{
     <a class="sna" onclick="nav('informes',this)"><span class="ico">📄</span>Informes clínicos</a>
     <a class="sna" onclick="nav('exportar',this)"><span class="ico">📤</span>Exportar e importar</a>
 
+    <div class="snlbl">Nuevas funciones</div>
+    <a class="sna" onclick="nav('adjuntos',this)"><span class="ico">📎</span>Adjuntos clínicos</a>
+    <a class="sna" onclick="nav('notas',this)"><span class="ico">📝</span>Notas de visita</a>
+    <a class="sna" onclick="nav('medconc',this)"><span class="ico">💊</span>Medicación concomitante</a>
+    <a class="sna" onclick="nav('ehp30',this)"><span class="ico">📋</span>EHP-30 calidad de vida</a>
+    <a class="sna" onclick="nav('pwa',this)"><span class="ico">📲</span>Instalación PWA</a>
+
     <div class="snlbl">Referencia</div>
     <a class="sna" onclick="nav('atajos',this)"><span class="ico">⌨️</span>Atajos y gestos</a>
     <a class="sna" onclick="nav('guias',this)"><span class="ico">📚</span>Guías clínicas</a>
     <a class="sna" onclick="nav('datos',this)"><span class="ico">🗄️</span>Datos y privacidad</a>
   </nav>
   <div class="sfoot">
-    <div>GinecoApp Pro v2.1</div>
-    <div style="margin-top:3px"><a href="index.html">← Volver a la aplicación</a></div>
+    <div>GinecoApp Pro v2.3</div>
+    <div style="margin-top:3px"><a href="gineapp.html">← Volver a la aplicación</a></div>
   </div>
 </aside>
 
@@ -252,7 +259,7 @@ kbd{
     <div class="topbar-title" id="ttl">Inicio rápido</div>
     <div style="flex:1"></div>
     <button class="tbtn" id="thbtn" onclick="toggleTheme()" title="Modo claro/oscuro">🌙</button>
-    <a class="tbtn" href="index.html" title="Volver a la app" style="margin-left:6px">← App</a>
+    <a class="tbtn" href="gineapp.html" title="Volver a la app" style="margin-left:6px">← App</a>
   </header>
 
   <div class="content">
@@ -260,9 +267,9 @@ kbd{
     <!-- INICIO RÁPIDO -->
     <div class="section on" id="s-inicio">
       <div class="page-title">Inicio rápido</div>
-      <div class="page-sub">GineApp Pro es una aplicación clínica de un solo archivo para el manejo de pacientes con miomas uterinos y endometriosis, basada en ESHRE 2022 y SEGO 2025.</div>
+      <div class="page-sub">GinecoApp Pro es una aplicación clínica de un solo archivo para el manejo de pacientes con miomas uterinos y endometriosis, basada en ESHRE 2022, SEGO 2025, AAGL 2021 y Guía Asturias 2025.</div>
 
-      <div class="box bo"><div class="bt">✅ Sin instalación ni servidor</div>GineApp Pro funciona completamente en el navegador. No requiere conexión a internet después de la primera carga. Los datos se guardan en el propio dispositivo.</div>
+      <div class="box bo"><div class="bt">✅ Sin instalación ni servidor</div>GinecoApp Pro funciona completamente en el navegador. No requiere conexión a internet después de la primera carga. Los datos se guardan en el propio dispositivo.</div>
 
       <h2>Primeros pasos</h2>
       <div class="steps">
@@ -412,8 +419,19 @@ kbd{
       </ul>
       <p>Las primeras 4 entradas son visibles directamente; el resto se colapsa con un botón «Ver N entradas anteriores».</p>
 
+      <h2>📊 Gráfico EVA histórico expandido</h2>
+      <p>Cuando hay al menos 2 visitas con datos de EVA, el sparkline de cabecera muestra un icono <strong>🔍</strong> junto a la etiqueta «EVA». Al tocar o hacer clic sobre los sparklines se despliega un <strong>gráfico completo</strong> con:</p>
+      <ul>
+        <li><strong>Dos series simultáneas:</strong> EVA dismenorrea (línea rosa) y EVA dolor pélvico (línea púrpura), cada una con sus propios puntos</li>
+        <li><strong>Eje Y</strong> de 0 a 10 con líneas de referencia cada 2 unidades</li>
+        <li><strong>Eje X</strong> con las fechas de cada visita registrada</li>
+        <li><strong>Zonas de color de fondo</strong> — verde (0–3 leve), naranja (4–6 moderado), rojo (7–10 severo) — para ubicar visualmente la severidad de cada punto</li>
+        <li><strong>Tooltips</strong> al pasar el cursor sobre cada punto, con fecha exacta y valor</li>
+      </ul>
+      <p>El gráfico se colapsa de nuevo al volver a tocar el área de los sparklines, manteniendo el modal compacto por defecto.</p>
+
       <h2>En el informe clínico completo</h2>
-      <p>El informe clínico completo incluye una sección «6. Historial de Seguimiento» con todas las visitas ordenadas cronológicamente, lista para imprimir o adjuntar a la historia clínica.</p>
+      <p>El informe clínico completo incluye una sección de <strong>Historial de Seguimiento</strong> con todas las visitas ordenadas cronológicamente, lista para imprimir, exportar a PDF o adjuntar a la historia clínica. Si la paciente tiene notas de visita registradas, el historial pasa a numerarse como sección 7 (las notas ocupan la sección 6); si no tiene notas, el historial es la sección 6.</p>
 
       <div class="box bw"><div class="bt">⚠️ Límite de entradas</div>Se conservan las últimas 50 entradas por paciente. Las más antiguas se descartan automáticamente al superar ese límite.</div>
     </div>
@@ -421,11 +439,12 @@ kbd{
     <!-- ALGORITMOS -->
     <div class="section" id="s-algoritmos">
       <div class="page-title">Algoritmos diagnósticos</div>
-      <div class="page-sub">Protocolos clínicos ESHRE 2022 y SEGO 2025 integrados en la app.</div>
+      <div class="page-sub">Protocolos clínicos ESHRE 2022, SEGO 2025 y Guía Asturias 2025 integrados en la app.</div>
 
       <h2>Tab Endometriosis</h2>
       <p>Algoritmo diagnóstico ESHRE 2022 en 4 pasos: triaje sintomático → imagen (eco TV / RM) → tratamiento empírico → laparoscopía si falló todo. Incluye clasificación rASRM (estadios I–IV) con criterios y localización de endometriosis profunda.</p>
       <div class="box bo"><div class="bt">🔑 Cambio clave ESHRE 2022</div>La imagen y el tratamiento empírico reemplazan la laparoscopía como primer paso diagnóstico en la mayoría de pacientes (Rec.6).</div>
+      <div class="box bi"><div class="bt">📌 Síntomas extragenitales — Guía Asturias 2025</div>El triaje sintomático incluye también formas de presentación extragenital: hemoptisis catamenial, dolor pleural catamenial, disnea catamenial y dolor sobre cicatriz quirúrgica. Disponibles como chips en el Tab 1 del formulario clínico.</div>
 
       <h2>Tab Miomas</h2>
       <p>Algoritmo diagnóstico SEGO 2025 con clasificación FIGO obligatoria (tipos 0–8), indicaciones de eco TV, RM y escala STEPW para histeroscopia.</p>
@@ -437,10 +456,31 @@ kbd{
     <!-- TRATAMIENTO -->
     <div class="section" id="s-tratamiento">
       <div class="page-title">Tratamiento</div>
-      <div class="page-sub">Guías de tratamiento médico y quirúrgico según ESHRE 2022 y SEGO 2025.</div>
+      <div class="page-sub">Guías de tratamiento médico y quirúrgico según ESHRE 2022, SEGO 2025 y Guía Asturias 2025.</div>
 
       <h2>Endo — Dolor</h2>
       <p>Algoritmo de tratamiento del dolor en endometriosis con líneas terapéuticas diferenciadas, principios quirúrgicos (excisión &gt; ablación, quistectomía &gt; drenaje) y recomendaciones de prevención de recurrencia post-cirugía (LNG-IUS o ACO ≥18–24 meses, Rec.65).</p>
+
+      <h3>📌 Escalón analgésico (Guía Asturias 2025)</h3>
+      <p>Complementario al tratamiento hormonal, no sustitutivo. Se adapta según la intensidad del dolor (EVA):</p>
+      <table class="tbl">
+        <tr><th>Escalón</th><th>Fármacos</th><th>Indicación</th></tr>
+        <tr><td>1 — Analgésico</td><td>Paracetamol, ibuprofeno, naproxeno, ácido mefenámico</td><td>EVA 1–4 leve-moderado</td></tr>
+        <tr><td>2 — Antihiperalgésico</td><td>Metamizol, pregabalina, amitriptilina, duloxetina</td><td>EVA 4–7 moderado / dolor neuropático</td></tr>
+        <tr><td>3 — Opioide menor</td><td>Tramadol, codeína (con paracetamol)</td><td>EVA 7–10 severo refractario</td></tr>
+      </table>
+      <div class="box bw"><div class="bt">⚠️ Uso de opioides</div>Reservar para dolor severo refractario a los escalones previos. Valorar riesgo de dependencia y mantener seguimiento estrecho.</div>
+
+      <h3>🔍 Seguimiento del endometrioma conservador (Guía Asturias 2025)</h3>
+      <p>Protocolo de manejo expectante cuando no hay indicación quirúrgica inmediata:</p>
+      <ul>
+        <li><strong>Primeros 2 años:</strong> ecografía TV cada 6 meses, registrando tamaño exacto en mm</li>
+        <li><strong>Sin cambios:</strong> espaciar a control anual</li>
+        <li><strong>Criterio de cirugía:</strong> 2 ecografías consecutivas con cambio significativo (crecimiento &gt;5mm, tabiques nuevos, componente sólido o vascularización interna)</li>
+        <li><strong>Cirugía urgente</strong> si: crecimiento rápido &gt;10mm en 3 meses, componente sólido vascularizado, síntomas agudos, o cambio morfológico en postmenopáusica</li>
+      </ul>
+      <div class="box bw"><div class="bt">⚠️ Impacto sobre reserva ovárica</div>La quistectomía reduce la reserva ovárica. En &lt;35 años con deseo gestacional, discutir preservación de fertilidad antes de operar (Rec.59 ESHRE).</div>
+      <p>Este protocolo está disponible como card completo en la sección <strong>Tratamiento → Endo–Dolor</strong> de la app, con timeline visual y cajas de alerta/manejo conservador.</p>
 
       <h2>Miomas — Médico</h2>
       <p>Tratamiento médico actualizado SEGO 2025: antagonistas GnRH (Relugolix 40mg+TAB, Linzagolix), manejo expectante, criterios de seguimiento y optimización prequirúrgica de hemoglobina.</p>
@@ -459,6 +499,16 @@ kbd{
 
       <h2>Endometriosis e infertilidad</h2>
       <p>Algoritmo ESHRE 2022: calcular EFI post-cirugía → EFI ≥7: intento natural/IUI → EFI &lt;7: FIV/ICSI. No supresión ovárica aislada (Rec.39). Preservación de fertilidad antes de cirugía ovárica en ≤35 años (Rec.59).</p>
+
+      <h3>📌 Criterios cuantitativos de preservación (Guía Asturias 2025)</h3>
+      <p>El decisor clínico contextual de la app aplica estos umbrales para alertar sobre preservación de fertilidad:</p>
+      <ul>
+        <li><strong>AMH &lt;1.1 ng/mL</strong> — umbral de alerta de reserva ovárica comprometida</li>
+        <li><strong>AMH &lt;0.5 ng/mL</strong> — reserva muy baja, urgencia reproductiva máxima</li>
+        <li><strong>Recuento folicular antral &gt;7</strong> — criterio favorable para preservación</li>
+        <li><strong>Edad &lt;38 años</strong> — criterio favorable; ≥38 años aumenta la urgencia</li>
+      </ul>
+      <p>Cuando una paciente cumple estos criterios y tiene deseo gestacional, el panel <strong>🧭 Guía Clínica Contextual</strong> del modal muestra una recomendación específica con el nivel de reserva ovárica y la sugerencia de derivación a Reproducción Asistida.</p>
 
       <h2>Miomas e infertilidad</h2>
       <p>SEGO 2025: miomectomía histeroscópica obligatoria para tipos 0–2 antes de TRA. Antagonistas GnRH 3 meses preconcepcional para intramurales &gt;4cm. EAU contraindicada en deseo gestacional.</p>
@@ -549,8 +599,11 @@ kbd{
         <li><strong>📄 Generar informe</strong> — renderiza el informe en pantalla</li>
         <li><strong>🖨️ Imprimir</strong> — abre el diálogo de impresión del navegador (optimizado para A4)</li>
         <li><strong>📋 Copiar</strong> — copia el texto del informe al portapapeles</li>
-        <li><strong>⬇️ Descargar HTML</strong> — descarga el informe como archivo HTML independiente</li>
+        <li><strong>⬇️ HTML</strong> — descarga el informe como archivo HTML independiente</li>
+        <li><strong>⬇️ PDF</strong> — genera un PDF nativo con el mismo diseño visual de la app (colores, layout), paginado automáticamente en A4</li>
       </ul>
+
+      <div class="box bi"><div class="bt">📄 Generación de PDF</div>El PDF se genera con las librerías jsPDF y html2canvas, embebidas en la propia app — no requiere conexión a internet ni servidor. El archivo se descarga con el nombre <code>GinecoApp_{nombre_paciente}_{fecha}.pdf</code>. Si el informe ocupa más de una página A4, se pagina automáticamente.</div>
 
       <p>Los informes también se pueden generar directamente desde el modal de paciente (botón 📄 Informe) o desde el icono 📄 en la lista de pacientes.</p>
     </div>
@@ -619,10 +672,31 @@ kbd{
       <h2>SEGO 2025 — Miomas Uterinos</h2>
       <p>Guía de la Sociedad Española de Ginecología y Obstetricia publicada en 2025. Cubre diagnóstico (clasificación FIGO obligatoria, escala STEPW), nuevos tratamientos médicos (Relugolix, Linzagolix), indicaciones quirúrgicas y manejo de la fertilidad.</p>
 
-      <h2>Visualización de guías</h2>
-      <p>La sección <strong>Guías 2025</strong> del menú principal muestra ambas guías en formato timeline (ESHRE en rosa, SEGO en naranja) con los puntos clave de cada área. Es una referencia rápida, no un reemplazo del documento completo.</p>
+      <h2>AAGL 2021 — Clasificación de Endometriosis</h2>
+      <p>Sistema que integra rASRM + ENZIAN + EFI en una clasificación única, evaluando simultáneamente extensión anatómica, afectación de tejido profundo y pronóstico reproductivo.</p>
+      <ul>
+        <li><strong>ENZIAN</strong> subclasifica la endometriosis profunda en compartimentos (A: tabique rectovaginal, B: ligamentos uterosacros, C: intestino, FA: vejiga/uréter) con grados 1–3 según profundidad de infiltración</li>
+        <li><strong>rASRM</strong> sigue siendo el estándar usado en la app para estadificación quirúrgica rutinaria y cálculo de EFI</li>
+        <li><strong>ENZIAN</strong> se reserva para casos de endometriosis profunda derivados a centro de excelencia, donde aporta mayor precisión para planificar cirugía multidisciplinar</li>
+      </ul>
+      <div class="box bi"><div class="bt">📌 En GinecoApp Pro</div>El decisor clínico detecta endometriosis profunda (afectación de tabique rectovaginal, intestino, vejiga, uréteres o diafragma) y recomienda derivación a centro de excelencia, donde se aplicaría la clasificación ENZIAN.</div>
 
-      <div class="box bi"><div class="bt">📌 Actualización de guías</div>Las guías clínicas se actualizan periódicamente. GinecoApp Pro refleja el estado de ESHRE 2022 y SEGO 2025. Consulta siempre las versiones originales para decisiones clínicas complejas.</div>
+      <h2>Guía Asturias 2025 — Programa de Atención Integral a la Endometriosis</h2>
+      <p>Guía del Principado de Asturias que amplía y concreta varios aspectos prácticos de ESHRE 2022, sin contradecirla:</p>
+      <table class="tbl">
+        <tr><th>Aporte</th><th>Dónde se aplica en la app</th></tr>
+        <tr><td>Síntomas extragenitales (hemoptisis, dolor pleural y disnea catameniales, dolor sobre cicatriz)</td><td>Chips en Tab 1 — Síntomas del formulario</td></tr>
+        <tr><td>Escalón analgésico (analgésico → antihiperalgésico → opioide menor)</td><td>Card en Tratamiento → Endo–Dolor</td></tr>
+        <tr><td>Seguimiento del endometrioma conservador (eco cada 6m → anual)</td><td>Card en Tratamiento → Endo–Dolor</td></tr>
+        <tr><td>Umbrales cuantitativos de preservación de fertilidad (AMH, folículos antrales, edad)</td><td>Decisor clínico contextual</td></tr>
+        <tr><td>Modelo de atención multidisciplinar (ginecología, cirugía, urología, psicología, fisioterapia)</td><td>Referencia conceptual — no aplicable a registro individual de pacientes</td></tr>
+      </table>
+      <div class="box bo"><div class="bt">✅ Coherencia con ESHRE 2022</div>La guía asturiana no contradice ESHRE 2022 en ningún punto. Aporta umbrales cuantitativos y detalle práctico (fármacos concretos, protocolos de seguimiento) donde ESHRE es más general.</div>
+
+      <h2>Visualización de guías</h2>
+      <p>La sección <strong>Guías 2025</strong> del menú principal muestra las cuatro referencias en formato timeline (ESHRE en rosa, SEGO en naranja, AAGL en verde, Asturias en rosa) con los puntos clave de cada área. Es una referencia rápida, no un reemplazo del documento completo.</p>
+
+      <div class="box bi"><div class="bt">📌 Actualización de guías</div>Las guías clínicas se actualizan periódicamente. GinecoApp Pro refleja el estado de ESHRE 2022, SEGO 2025, AAGL 2021 y Guía Asturias 2025. Consulta siempre las versiones originales para decisiones clínicas complejas.</div>
     </div>
 
     <!-- DATOS Y PRIVACIDAD -->
@@ -640,19 +714,193 @@ kbd{
       </table>
 
       <h2>Capacidad de almacenamiento</h2>
-      <p>IndexedDB permite  <strong>cientos de MB por origen</strong>. Con el historial longitudinal activado, cada paciente ocupa aproximadamente 7–10 KB con 3–5 entradas de historial. Estimación orientativa de capacidad:</p>
+      <p>El localStorage tiene un límite aproximado de <strong>5 MB por origen</strong>. Con el historial longitudinal activado, cada paciente ocupa aproximadamente 7–10 KB con 3–5 entradas de historial. Estimación orientativa de capacidad:</p>
       <ul>
-        <li>Sin historial: ~50000–70000 pacientes</li>
-        <li>Con historial de 5 entradas: ~20000–30000 pacientes</li>
-        <li>Con historial de 10 entradas: ~10000–15000 pacientes</li>
+        <li>Sin historial: ~500–700 pacientes</li>
+        <li>Con historial de 5 entradas: ~200–300 pacientes</li>
+        <li>Con historial de 10 entradas: ~100–150 pacientes</li>
       </ul>
-      <div class="box bw"><div class="bt">⚠️ Recomendación</div>Realiza backups JSON periódicos desde Informes → Exportar, especialmente antes de limpiar el navegador o cambiar de dispositivo. Los datos en IndexedDB se pierden al borrar el historial del navegador o al reinstalarlo.</div>
+      <div class="box bw"><div class="bt">⚠️ Recomendación</div>Realiza backups JSON periódicos desde Informes → Exportar, especialmente antes de limpiar el navegador o cambiar de dispositivo. Los datos en localStorage se pierden al borrar el historial del navegador.</div>
 
       <h2>RGPD y datos clínicos</h2>
       <p>Los archivos exportados (JSON, CSV, Excel) contienen datos clínicos de carácter personal. Su almacenamiento y transmisión deben cumplir con el <strong>Reglamento General de Protección de Datos (RGPD)</strong> y la normativa sanitaria aplicable. GinecoApp Pro no aplica cifrado adicional a los datos exportados — es responsabilidad del profesional protegerlos adecuadamente.</p>
 
       <h2>Borrar todos los datos</h2>
       <p>En <strong>Informes → Importar → 🗑️ Borrar todas las pacientes</strong>. La acción pide doble confirmación y es irreversible. Se recomienda exportar un backup antes.</p>
+    </div>
+
+
+    <!-- ADJUNTOS CLÍNICOS -->
+    <div class="section" id="s-adjuntos">
+      <div class="page-title">Adjuntos clínicos</div>
+      <div class="page-sub">Gestión de imágenes ecográficas, PDFs de informes y otros documentos vinculados a cada paciente.</div>
+
+      <h2>Dónde se encuentran</h2>
+      <p>La sección <strong>📎 DOCUMENTOS</strong> aparece en el modal de cada paciente, entre el historial longitudinal y el panel de guía clínica contextual.</p>
+
+      <h2>Tipos de archivo aceptados</h2>
+      <div class="card-grid">
+        <div class="card"><div style="font-size:20px;margin-bottom:8px">🖼️</div><strong style="font-size:13px">Imágenes</strong><p style="margin-top:5px">JPEG, PNG, WebP y GIF. Se muestra un thumbnail inline de 38×38 px en la lista.</p></div>
+        <div class="card"><div style="font-size:20px;margin-bottom:8px">📄</div><strong style="font-size:13px">PDF</strong><p style="margin-top:5px">Informes externos, analíticas, consentimientos. Se muestra icono 📄 en lugar de thumbnail.</p></div>
+      </div>
+      <div class="box bw"><div class="bt">⚠️ Tamaño máximo</div>10 MB por archivo. Si se supera, el archivo se omite y se muestra un aviso. No hay límite en el número de adjuntos, pero el almacenamiento total de IndexedDB suele ser de varios cientos de MB.</div>
+
+      <h2>Adjuntar documentos</h2>
+      <div class="steps">
+        <div class="step"><div class="step-n">1</div><div class="step-body"><strong>Abrir el modal de paciente</strong><p>Toca o haz clic en cualquier paciente de la lista para abrir su modal.</p></div></div>
+        <div class="step"><div class="step-n">2</div><div class="step-body"><strong>Pulsar «+ Adjuntar»</strong><p>El botón rosa en la cabecera de la sección DOCUMENTOS abre el selector de archivos del sistema. Se pueden seleccionar varios a la vez.</p></div></div>
+        <div class="step"><div class="step-n">3</div><div class="step-body"><strong>Confirmar selección</strong><p>Los archivos se guardan inmediatamente en IndexedDB. La lista se actualiza sin necesidad de cerrar el modal.</p></div></div>
+      </div>
+
+      <h2>Visualizar y eliminar</h2>
+      <ul>
+        <li><strong>👁 Ver</strong> — abre el archivo en una nueva pestaña del navegador usando una URL temporal (<code>createObjectURL</code>).</li>
+        <li><strong>🗑 Eliminar</strong> — elimina el adjunto de IndexedDB con confirmación. La acción es irreversible.</li>
+      </ul>
+
+      <h2>Importante sobre los backups</h2>
+      <div class="box br"><div class="bt">⚠️ Los adjuntos NO se incluyen en el backup JSON</div>Los archivos Blob no son serializables a JSON. Solo se exportan los datos clínicos textuales. Para conservar los adjuntos, mantén el mismo navegador y dispositivo o haz copias manuales de los archivos originales.</div>
+
+      <h2>Almacenamiento</h2>
+      <p>Los adjuntos se guardan en el store <code>adjuntos</code> de IndexedDB, separado del store <code>pacientes</code>. Al eliminar una paciente, todos sus adjuntos se borran automáticamente.</p>
+    </div>
+
+    <!-- NOTAS DE VISITA -->
+    <div class="section" id="s-notas">
+      <div class="page-title">Notas de visita</div>
+      <div class="page-sub">Registro cronológico manual de anotaciones clínicas por visita, independiente del historial automático.</div>
+
+      <h2>Diferencia con el historial longitudinal</h2>
+      <table class="tbl">
+        <tr><th>Historial automático</th><th>Notas de visita</th></tr>
+        <tr><td>Generado automáticamente al detectar cambios clínicos al guardar</td><td>Creadas manualmente por el médico en cualquier momento</td></tr>
+        <tr><td>Registra valores numéricos y listas (EVA, Hgb, tratamiento…)</td><td>Texto libre: evolución, decisiones, instrucciones al paciente</td></tr>
+        <tr><td>No editable</td><td>Se pueden eliminar individualmente</td></tr>
+      </table>
+
+      <h2>Crear una nota</h2>
+      <div class="steps">
+        <div class="step"><div class="step-n">1</div><div class="step-body"><strong>Abrir el modal de la paciente</strong><p>La sección <strong>📝 NOTAS DE VISITA</strong> aparece entre los adjuntos y el panel de guía contextual.</p></div></div>
+        <div class="step"><div class="step-n">2</div><div class="step-body"><strong>Pulsar «+ Nueva nota»</strong><p>Se abre un panel flotante sin cerrar el modal de paciente.</p></div></div>
+        <div class="step"><div class="step-n">3</div><div class="step-body"><strong>Completar el formulario</strong><p>Selecciona la <strong>fecha</strong> (por defecto hoy), el <strong>tipo de visita</strong> y escribe el texto de la nota.</p></div></div>
+        <div class="step"><div class="step-n">4</div><div class="step-body"><strong>Guardar</strong><p>La nota se guarda en el objeto de la paciente en IndexedDB y aparece inmediatamente en la lista, ordenada de más reciente a más antigua.</p></div></div>
+      </div>
+
+      <h2>Tipos de visita disponibles</h2>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px">
+        <span class="tag tpu">Consulta</span><span class="tag tpu">Revisión</span><span class="tag tpu">Urgencia</span>
+        <span class="tag tpu">Prueba diagnóstica</span><span class="tag tpu">Resultado analítica</span>
+        <span class="tag tpu">Llamada telefónica</span><span class="tag tpu">Derivación</span><span class="tag tpu">Otro</span>
+      </div>
+
+      <h2>En el informe clínico</h2>
+      <p>Las notas aparecen en el <strong>Informe Clínico Completo</strong> como sección «6. Notas de Visita» (el historial longitudinal pasa a ser la sección 7 cuando existen notas). Cada nota muestra fecha, tipo y texto completo.</p>
+    </div>
+
+    <!-- MEDICACIÓN CONCOMITANTE -->
+    <div class="section" id="s-medconc">
+      <div class="page-title">Medicación concomitante</div>
+      <div class="page-sub">Registro de fármacos de uso habitual y detección automática de interacciones con antagonistas GnRH.</div>
+
+      <h2>Dónde se registra</h2>
+      <p>Al final del <strong>Tab 3 — Tratamiento</strong> del formulario clínico. La sección incluye chips predefinidos para los fármacos más frecuentes y un campo de texto libre para otros.</p>
+
+      <h2>Chips predefinidos</h2>
+      <p>24 categorías habituales: anticoagulantes, antiagregantes, antihipertensivos, betabloqueantes, estatinas, antidiabéticos, antiepilépticos, antidepresivos, benzodiacepinas, corticoides, inmunosupresores, inhibidores de bomba de protones, tiroxina, bifosfonatos, hierro, antifúngicos azólicos, rifampicina, inhibidores P-gp/CYP3A4, y otros.</p>
+
+      <h2>Detección automática de interacciones</h2>
+      <p>Cuando la paciente tiene activo un <strong>antagonista GnRH</strong> (Relugolix o Linzagolix) en el tratamiento médico y se selecciona medicación concomitante relevante, aparece automáticamente una caja de alerta con tres niveles:</p>
+
+      <table class="tbl">
+        <tr><th>Nivel</th><th>Color</th><th>Ejemplos</th><th>Conducta</th></tr>
+        <tr><td><strong>Alta</strong></td><td><span class="tag" style="background:rgba(232,85,85,.15);color:var(--rd);border-color:rgba(232,85,85,.25)">🔴 Alta</span></td><td>Azoles, rifampicina, ciclosporina, anticoagulantes</td><td>Valorar sustitución del fármaco</td></tr>
+        <tr><td><strong>Moderada</strong></td><td><span class="tag to">🟡 Media</span></td><td>Antiepilépticos inductores, corticoides sistémicos</td><td>Monitorizar</td></tr>
+        <tr><td><strong>Leve</strong></td><td><span class="tag tg">🟢 Baja</span></td><td>Estatinas, bifosfonatos</td><td>Precaución</td></tr>
+      </table>
+
+      <div class="box bi"><div class="bt">💡 Base clínica</div>Las interacciones se basan en el mecanismo transportador P-gp y enzima CYP3A4 descrito en las fichas técnicas de Relugolix (Ryeqo®) y Linzagolix (Yselty®) aprobadas por EMA/FDA.</div>
+
+      <h2>En el modal e informes</h2>
+      <p>La medicación concomitante aparece en el modal de la paciente con los chips coloreados según el nivel de interacción detectado. En los <strong>informes clínicos</strong> (completo y plan de tratamiento) se incluye la lista de fármacos y, si procede, el aviso de interacciones. En el <strong>CSV</strong> se generan las columnas <code>Med_Concomitante</code> e <code>Interacciones_GnRH</code>.</p>
+    </div>
+
+    <!-- EHP-30 -->
+    <div class="section" id="s-ehp30">
+      <div class="page-title">EHP-30 — Calidad de vida</div>
+      <div class="page-sub">Cuestionario completo de 30 ítems como alternativa al EHP-5 para evaluaciones detalladas.</div>
+
+      <h2>EHP-5 vs EHP-30</h2>
+      <table class="tbl">
+        <tr><th></th><th>EHP-5</th><th>EHP-30</th></tr>
+        <tr><td>Ítems</td><td>5</td><td>30 (6 por dominio)</td></tr>
+        <tr><td>Score</td><td>0–15</td><td>0–120</td></tr>
+        <tr><td>Escala</td><td>0–3 (Nunca→Siempre)</td><td>0–4 (Nunca→Siempre)</td></tr>
+        <tr><td>Tiempo</td><td>~1 min</td><td>~5–8 min</td></tr>
+        <tr><td>Uso recomendado</td><td>Seguimiento rutinario</td><td>Evaluación inicial detallada o estudios clínicos</td></tr>
+      </table>
+
+      <h2>Cómo activar el EHP-30</h2>
+      <p>En el <strong>Tab 1 — Síntomas</strong> del formulario, junto al título de la sección de calidad de vida encontrarás un toggle <strong>EHP-5 ↔ EHP-30</strong>. Al activarlo, el bloque de 5 sliders se sustituye por el cuestionario completo de 30 preguntas organizadas en 5 dominios.</p>
+
+      <h2>Los 5 dominios</h2>
+      <div class="tl">
+        <div class="tli"><div class="tld"></div><div class="tlt">D1 — Dolor e impacto físico</div><div class="tlb">6 ítems sobre limitación por dolor, dolor nocturno, disuria, disquecia y dispareunia.</div></div>
+        <div class="tli"><div class="tld"></div><div class="tlt">D2 — Bienestar emocional</div><div class="tlb">6 ítems sobre depresión, ansiedad, irritabilidad, llanto y sensación de dominio de la enfermedad.</div></div>
+        <div class="tli"><div class="tld"></div><div class="tlt">D3 — Relaciones sociales</div><div class="tlb">6 ítems sobre aislamiento social, relación de pareja y necesidad de apoyo.</div></div>
+        <div class="tli"><div class="tld"></div><div class="tlt">D4 — Autoestima e imagen corporal</div><div class="tlb">6 ítems sobre atractivo percibido, feminidad, vergüenza y autoestima.</div></div>
+        <div class="tli"><div class="tld"></div><div class="tlt">D5 — Trabajo y vida cotidiana</div><div class="tlb">6 ítems sobre absentismo, concentración, rendimiento laboral y ocio.</div></div>
+      </div>
+
+      <h2>Interpretación del score</h2>
+      <table class="tbl">
+        <tr><th>Score EHP-30</th><th>Equivalente EHP-5</th><th>Interpretación</th></tr>
+        <tr><td>0–24 (≤20%)</td><td>0–3</td><td>Sin impacto significativo</td></tr>
+        <tr><td>25–60 (21–50%)</td><td>4–7</td><td>Impacto moderado</td></tr>
+        <tr><td>61–90 (51–75%)</td><td>8–11</td><td>Impacto severo</td></tr>
+        <tr><td>91–120 (&gt;75%)</td><td>12–15</td><td>Impacto muy severo — acción prioritaria</td></tr>
+      </table>
+
+      <div class="box bi"><div class="bt">💡 Umbral del decisor clínico</div>El panel de guía contextual usa el 50% del máximo como umbral de "impacto severo", válido para ambas escalas. EHP-5 ≥8/15 o EHP-30 ≥60/120 activan las recomendaciones de escalada terapéutica.</div>
+
+      <h2>Integración</h2>
+      <p>El modo elegido (<code>ehpMode: '5'</code> o <code>'30'</code>) se guarda con la paciente y se restaura al editar. Aparece en el <strong>historial longitudinal</strong>, el <strong>modal</strong>, los <strong>informes</strong> (con desglose por dominio en EHP-30) y el <strong>CSV</strong> (columnas <code>EHP_Version</code> y <code>EHP_Total</code>).</p>
+    </div>
+
+    <!-- PWA -->
+    <div class="section" id="s-pwa">
+      <div class="page-title">Instalación PWA</div>
+      <div class="page-sub">GinecoApp Pro es una Progressive Web App instalable en cualquier dispositivo.</div>
+
+      <h2>¿Qué significa instalada?</h2>
+      <p>Al instalar la app, GinecoApp Pro aparece en el escritorio o pantalla de inicio del dispositivo como cualquier aplicación nativa, se abre sin barra de navegador y funciona completamente sin conexión a internet una vez instalada.</p>
+
+      <h2>Instalar en Android (Chrome)</h2>
+      <div class="steps">
+        <div class="step"><div class="step-n">1</div><div class="step-body"><strong>Abrir la URL en Chrome</strong><p>Navega a <code>https://josemanuel.github.io/gineapp/</code> en Chrome para Android.</p></div></div>
+        <div class="step"><div class="step-n">2</div><div class="step-body"><strong>Banner automático o botón «⬇️ Instalar»</strong><p>Chrome mostrará un banner de instalación o aparecerá el botón en la barra superior de la app. También puedes usar el menú ⋮ → «Añadir a pantalla de inicio».</p></div></div>
+        <div class="step"><div class="step-n">3</div><div class="step-body"><strong>Confirmar</strong><p>Acepta la instalación. El icono 🌸 aparecerá en tu pantalla de inicio.</p></div></div>
+      </div>
+
+      <h2>Instalar en iOS (Safari)</h2>
+      <div class="steps">
+        <div class="step"><div class="step-n">1</div><div class="step-body"><strong>Abrir en Safari</strong><p>La instalación PWA en iOS solo funciona desde Safari (no Chrome ni Firefox en iOS).</p></div></div>
+        <div class="step"><div class="step-n">2</div><div class="step-body"><strong>Compartir → Añadir a pantalla de inicio</strong><p>Pulsa el icono de compartir (cuadrado con flecha) y selecciona «Añadir a pantalla de inicio».</p></div></div>
+        <div class="step"><div class="step-n">3</div><div class="step-body"><strong>Confirmar nombre y añadir</strong><p>El nombre «GinecoApp» aparecerá prerellenado. Pulsa «Añadir».</p></div></div>
+      </div>
+
+      <h2>Instalar en escritorio (Chrome / Edge)</h2>
+      <p>En el navegador de escritorio aparece un icono de instalación (⊕) en la barra de direcciones o el botón «⬇️ Instalar» en la topbar de la app. Haz clic y confirma.</p>
+
+      <h2>Funcionamiento sin conexión</h2>
+      <p>Una vez instalada, la app funciona completamente offline. El Service Worker cachea <code>gineapp.html</code>, <code>ayuda.html</code> y los iconos en la primera carga. Los datos clínicos siempre se guardan en IndexedDB del dispositivo, independientemente de la conexión.</p>
+
+      <div class="box bw"><div class="bt">⚠️ Primera carga con conexión</div>La app debe cargarse al menos una vez con conexión a internet para que el Service Worker guarde los archivos en caché. A partir de ahí funciona sin red.</div>
+
+      <h2>Actualizar la app</h2>
+      <p>Cuando hay una nueva versión disponible, aparece un toast «🔄 Actualización disponible» con un botón «Actualizar». Al pulsarlo se recarga la app con la versión más reciente.</p>
+
+      <h2>Almacenamiento persistente</h2>
+      <p>En modo PWA instalada el almacenamiento IndexedDB es automáticamente persistente: el sistema operativo no limpiará los datos aunque haya poco espacio. En modo navegador normal la app solicita <code>navigator.storage.persist()</code> al arrancar, aunque la concesión depende del navegador.</p>
     </div>
 
   </div><!-- /content -->
@@ -678,7 +926,10 @@ const titles = {
   fertilidad:'Fertilidad', calculadoras:'Calculadoras',
   dashboard:'Dashboard', informes:'Informes clínicos',
   exportar:'Exportar e importar', atajos:'Atajos y gestos',
-  guias:'Guías clínicas', datos:'Datos y privacidad'
+  guias:'Guías clínicas', datos:'Datos y privacidad',
+  adjuntos:'Adjuntos clínicos', notas:'Notas de visita',
+  medconc:'Medicación concomitante', ehp30:'EHP-30 calidad de vida',
+  pwa:'Instalación PWA'
 };
 
 let _current = 'inicio';
