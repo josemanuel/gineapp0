@@ -232,6 +232,8 @@ kbd{
 
     <div class="snlbl">Gestión</div>
     <a class="sna" onclick="nav('dashboard',this)"><span class="ico">📊</span>Dashboard</a>
+    <a class="sna" onclick="nav('revisiones',this)"><span class="ico">📅</span>Revisiones</a>
+    <a class="sna" onclick="nav('filtros',this)"><span class="ico">🔍</span>Filtros avanzados</a>
     <a class="sna" onclick="nav('informes',this)"><span class="ico">📄</span>Informes clínicos</a>
     <a class="sna" onclick="nav('exportar',this)"><span class="ico">📤</span>Exportar e importar</a>
 
@@ -241,6 +243,7 @@ kbd{
     <a class="sna" onclick="nav('enfermeria',this)"><span class="ico">🩺</span>Valoración de enfermería</a>
     <a class="sna" onclick="nav('medconc',this)"><span class="ico">💊</span>Medicación concomitante</a>
     <a class="sna" onclick="nav('ehp30',this)"><span class="ico">📋</span>EHP-30 calidad de vida</a>
+    <a class="sna" onclick="nav('vistarapida',this)"><span class="ico">👁️</span>Vista previa rápida</a>
     <a class="sna" onclick="nav('pwa',this)"><span class="ico">📲</span>Instalación PWA</a>
 
     <div class="snlbl">Referencia</div>
@@ -328,11 +331,12 @@ kbd{
       <p>El campo de búsqueda en la topbar filtra por <strong>nombre completo</strong> y <strong>NHC</strong> en tiempo real. Al escribir, la app navega automáticamente a la sección Pacientes y aplica el filtro. Atajo de teclado: <kbd>Ctrl</kbd>+<kbd>K</kbd>.</p>
 
       <h2>Filtros de lista</h2>
-      <p>En la sección Pacientes hay dos selectores de filtro combinables:</p>
+      <p>En la sección Pacientes hay dos selectores de filtro básicos, combinables:</p>
       <ul>
         <li><strong>Patología:</strong> Todas / Endometriosis / Miomas / Ambas</li>
         <li><strong>Deseo gestacional:</strong> Todas / Desean gestación / No gestación</li>
       </ul>
+      <p>El botón <strong>🔍 Filtros avanzados</strong> despliega un panel adicional con edad, EVA, rASRM, FIGO y estado de revisión. Ver la sección <a href="#" onclick="nav('filtros',null)">Filtros avanzados</a> para el detalle completo.</p>
 
       <h2>Nueva paciente</h2>
       <p>Accede desde el menú lateral, el botón ➕ del bottom nav o la quick-action del dashboard. El formulario tiene 5 tabs con <strong>badges de completitud</strong> que indican cuántos campos clave tiene cada pestaña rellenos (verde ✓ = completo, naranja N/M = parcial).</p>
@@ -568,7 +572,7 @@ kbd{
       <p>Donut SVG animado con leyenda y barras de porcentaje para endometriosis, miomas, ambas patologías y deseo gestacional.</p>
 
       <h2>⏰ Revisiones próximas</h2>
-      <p>Widget que muestra las pacientes con cita en los <strong>próximos 14 días</strong>, ordenadas por fecha. Las citas vencidas aparecen en rojo con indicador de días transcurridos. El badge rojo en la cabecera del widget indica el número de revisiones vencidas. Se actualiza automáticamente al guardar cualquier paciente.</p>
+      <p>Widget que muestra hasta 4 pacientes con cita en los <strong>próximos 14 días</strong>, ordenadas por fecha. Las citas vencidas aparecen en rojo con indicador de días transcurridos. El badge rojo en la cabecera del widget indica el número de revisiones vencidas. Se actualiza automáticamente al guardar cualquier paciente. El enlace <strong>«Ver todas →»</strong> lleva a la sección completa <a href="#" onclick="nav('revisiones',null)">📅 Revisiones</a>, sin límite de pacientes ni de días.</p>
 
       <h2>Últimas pacientes</h2>
       <p>Las 5 pacientes modificadas más recientemente, con timestamp relativo (Hoy / Ayer / Hace Nd). Al hacer clic se abre su modal.</p>
@@ -634,6 +638,16 @@ kbd{
         <li><strong>Solo añadir nuevas</strong> — añade únicamente las pacientes cuyo NHC no existe ya</li>
       </ul>
       <div class="box br"><div class="bt">⚠️ Precaución</div>El modo «Reemplazar todo» es irreversible. Exporta un backup antes de importar.</div>
+
+      <h2>Filtros guardados</h2>
+      <p>Desde el panel de <a href="#" onclick="nav('filtros',null)">Filtros avanzados</a> en Pacientes, puedes guardar una combinación de criterios con un nombre descriptivo (ej. «Pendientes histeroscopia») mediante el botón <strong>💾 Guardar filtro actual</strong>.</p>
+      <ul>
+        <li>Los filtros guardados aparecen como <strong>chips 🔖</strong> sobre la lista de pacientes</li>
+        <li>Un clic sobre el chip <strong>aplica</strong> esa combinación de filtros inmediatamente</li>
+        <li>El icono <strong>✕</strong> en el chip lo elimina (con confirmación)</li>
+        <li>No hay límite práctico en el número de filtros guardados</li>
+      </ul>
+      <div class="box bi"><div class="bt">ℹ️ Dónde se almacenan</div>Los filtros guardados se guardan en el <code>localStorage</code> del navegador (igual que la preferencia de tema), no en IndexedDB. Son específicos de este dispositivo y navegador — no se incluyen en el backup JSON de pacientes.</div>
     </div>
 
     <!-- ATAJOS -->
@@ -962,6 +976,82 @@ kbd{
       <p>En modo PWA instalada el almacenamiento IndexedDB es automáticamente persistente: el sistema operativo no limpiará los datos aunque haya poco espacio. En modo navegador normal la app solicita <code>navigator.storage.persist()</code> al arrancar, aunque la concesión depende del navegador.</p>
     </div>
 
+    <!-- FILTROS AVANZADOS -->
+    <div class="section" id="s-filtros">
+      <div class="page-title">Filtros avanzados</div>
+      <div class="page-sub">Búsqueda clínica precisa en la lista de pacientes, combinando criterios demográficos y clínicos.</div>
+
+      <h2>Cómo activarlos</h2>
+      <p>En la sección <strong>Pacientes</strong>, junto a los selectores básicos, pulsa <strong>🔍 Filtros avanzados</strong>. Se despliega un panel con los siguientes criterios, todos combinables entre sí y con los filtros básicos de patología/gestación:</p>
+
+      <table class="tbl">
+        <tr><th>Filtro</th><th>Tipo</th><th>Detalle</th></tr>
+        <tr><td>Edad</td><td>Rango mín–máx</td><td>En años, calculada desde la fecha de nacimiento</td></tr>
+        <tr><td>EVA actual</td><td>Rango mín–máx</td><td>Toma el valor máximo entre EVA dismenorrea y EVA dolor pélvico de cada paciente</td></tr>
+        <tr><td>Revisión</td><td>Selector</td><td>Todas / Solo con revisión pendiente / Solo revisión vencida</td></tr>
+        <tr><td>Estadio rASRM</td><td>Multiselección (chips)</td><td>I, II, III, IV — selecciona varios para combinarlos con «O»</td></tr>
+        <tr><td>Tipo FIGO</td><td>Multiselección (chips)</td><td>0 a 8 — solo aplica a pacientes con diagnóstico de miomas</td></tr>
+      </table>
+
+      <h2>Ejemplo de uso</h2>
+      <div class="box bi"><div class="bt">💡 Caso práctico</div>Para encontrar pacientes con mioma submucoso pendientes de histeroscopia: activa los chips FIGO <strong>0, 1 y 2</strong>. Para añadir solo las que tienen el dolor más controlado: combina con EVA máximo <strong>0–3</strong>.</div>
+
+      <h2>Limpiar filtros</h2>
+      <p>El botón <strong>✕ Limpiar filtros</strong> en la parte inferior del panel resetea todos los campos avanzados (no afecta a los selectores básicos de patología y gestación, que se limpian seleccionando «Todas»).</p>
+
+      <h2>Guardar combinaciones</h2>
+      <p>Una vez aplicada una combinación de filtros útil, pulsa <strong>💾 Guardar filtro actual</strong> para reutilizarla más adelante. Ver la sección <a href="#" onclick="nav('exportar',null)">Filtros guardados</a> más abajo para el detalle.</p>
+    </div>
+
+    <!-- REVISIONES -->
+    <div class="section" id="s-revisiones">
+      <div class="page-title">Revisiones</div>
+      <div class="page-sub">Vista completa de todas las pacientes con cita de revisión programada.</div>
+
+      <h2>Acceso</h2>
+      <p>Disponible desde el menú lateral (📅 Revisiones, junto a Pacientes) y desde el menú «Más» en móvil. El badge rojo junto al icono muestra el número de revisiones vencidas en tiempo real.</p>
+
+      <h2>Diferencia con el widget del dashboard</h2>
+      <p>El Dashboard muestra solo un resumen de hasta 4 pacientes con revisión en los próximos 14 días. La sección <strong>Revisiones</strong> muestra <strong>todas</strong> las pacientes con fecha de próxima revisión registrada, sin límite, agrupadas y ordenables.</p>
+
+      <h2>Agrupación</h2>
+      <p>Las pacientes se organizan automáticamente en tres bloques:</p>
+      <ul>
+        <li><strong>🔴 Vencidas</strong> — la fecha de revisión ya pasó</li>
+        <li><strong>🟠 Próximos 7 días</strong> — revisión inminente</li>
+        <li><strong>📅 Próximas revisiones</strong> — el resto de citas futuras</li>
+      </ul>
+      <p>Cada bloque muestra el número de pacientes que contiene. Dentro de cada grupo, el selector <strong>«Fecha más próxima / más lejana primero»</strong> controla el orden.</p>
+
+      <h2>Acceder a la paciente</h2>
+      <p>Toca o haz clic en cualquier fila para abrir directamente el modal completo de esa paciente, igual que desde la lista de Pacientes.</p>
+    </div>
+
+    <!-- VISTA PREVIA RÁPIDA -->
+    <div class="section" id="s-vistarapida">
+      <div class="page-title">Vista previa rápida</div>
+      <div class="page-sub">Consulta los datos esenciales de una paciente sin abrir el modal completo.</div>
+
+      <h2>¿Para qué sirve?</h2>
+      <p>Cuando solo necesitas comprobar un dato rápido (diagnóstico, EVA actual, próxima revisión) entre paciente y paciente, abrir el modal completo cada vez puede ser lento. La vista previa rápida muestra esos datos esenciales en una tarjeta flotante, sin interrumpir el flujo de trabajo.</p>
+
+      <h2>En ordenador (ratón)</h2>
+      <div class="steps">
+        <div class="step"><div class="step-n">1</div><div class="step-body"><strong>Pasa el cursor sobre una fila</strong><p>Funciona en cualquier listado de pacientes: Pacientes, Dashboard («Últimas pacientes») y Revisiones.</p></div></div>
+        <div class="step"><div class="step-n">2</div><div class="step-body"><strong>Espera un instante</strong><p>Tras una breve pausa aparece una tarjeta junto al cursor con nombre, edad, diagnóstico, EVA actual, tratamiento y próxima revisión si existe.</p></div></div>
+        <div class="step"><div class="step-n">3</div><div class="step-body"><strong>Haz clic para el detalle completo</strong><p>Un clic normal sobre la fila sigue abriendo el modal completo de la paciente, exactamente igual que antes.</p></div></div>
+      </div>
+
+      <h2>En móvil (táctil)</h2>
+      <div class="steps">
+        <div class="step"><div class="step-n">1</div><div class="step-body"><strong>Mantén pulsada una fila</strong><p>Una pulsación larga (no un tap normal) sobre cualquier fila de paciente.</p></div></div>
+        <div class="step"><div class="step-n">2</div><div class="step-body"><strong>Se abre una vista compacta</strong><p>Un panel inferior con los mismos datos esenciales que en escritorio. El dispositivo puede vibrar brevemente para confirmar que se activó.</p></div></div>
+        <div class="step"><div class="step-n">3</div><div class="step-body"><strong>Ver ficha completa o cerrar</strong><p>Pulsa el botón «Ver ficha completa» para abrir el modal, o toca fuera del panel para cerrarlo. Un <strong>tap normal</strong> (sin mantener pulsado) sigue abriendo directamente el modal completo, igual que siempre.</p></div></div>
+      </div>
+
+      <div class="box bi"><div class="bt">💡 No cambia nada del modal actual</div>La vista previa rápida es un paso intermedio opcional. El modal completo de paciente y todas sus funciones (historial, adjuntos, notas, enfermería, guía contextual) siguen funcionando exactamente igual que antes.</div>
+    </div>
+
   </div><!-- /content -->
 </main>
 
@@ -983,12 +1073,14 @@ const titles = {
   formulario:'Formulario clínico', historial:'Historial longitudinal',
   algoritmos:'Algoritmos diagnósticos', tratamiento:'Tratamiento',
   fertilidad:'Fertilidad', calculadoras:'Calculadoras',
-  dashboard:'Dashboard', informes:'Informes clínicos',
+  dashboard:'Dashboard', revisiones:'Revisiones', filtros:'Filtros avanzados',
+  informes:'Informes clínicos',
   exportar:'Exportar e importar', atajos:'Atajos y gestos',
   guias:'Guías clínicas', datos:'Datos y privacidad',
   adjuntos:'Adjuntos clínicos', notas:'Notas de visita',
   enfermeria:'Valoración de enfermería',
   medconc:'Medicación concomitante', ehp30:'EHP-30 calidad de vida',
+  vistarapida:'Vista previa rápida',
   pwa:'Instalación PWA'
 };
 
