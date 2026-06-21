@@ -67,6 +67,7 @@ nav{flex:1;padding:10px 7px;overflow-y:auto}
 .btn{display:inline-flex;align-items:center;gap:5px;padding:7px 13px;border-radius:var(--r2);font-size:13px;font-weight:500;cursor:pointer;border:none;transition:all .15s;white-space:nowrap;font-family:inherit}
 .bp{background:var(--pk);color:#fff}.bp:hover{filter:brightness(1.1);transform:translateY(-1px);box-shadow:0 4px 14px rgba(196,98,164,.35)}
 .bs{background:var(--bg3);color:var(--text);border:1px solid var(--border2)}.bs:hover{background:var(--bg4)}
+.bs.on{background:rgba(196,98,164,.15);border-color:var(--pk);color:var(--pk)}
 .bg{background:transparent;color:var(--text2)}.bg:hover{background:var(--bg3);color:var(--text)}
 .bd{background:var(--rd);color:#fff}.bd:hover{filter:brightness(1.1)}
 .bsm{padding:5px 10px;font-size:12px}
@@ -187,6 +188,22 @@ input[type=range].fc{padding:4px 0;border:none;background:transparent;cursor:poi
 .rv{font-weight:600;text-align:right}
 /* TOAST */
 .toast{position:fixed;bottom:68px;left:50%;transform:translateX(-50%) translateY(20px);z-index:999;background:var(--card2);border:1px solid var(--border2);border-radius:var(--r2);padding:10px 15px;font-size:13px;box-shadow:var(--shadow);display:flex;align-items:center;gap:8px;opacity:0;transition:all .25s;white-space:nowrap;max-width:calc(100vw - 32px)}
+/* Vista previa compacta — desktop (popover junto al cursor) */
+.qpv{position:fixed;z-index:450;background:var(--card);border:1px solid var(--border2);border-radius:var(--r);box-shadow:var(--shadow);padding:13px 15px;width:260px;opacity:0;pointer-events:none;transition:opacity .15s;font-family:inherit}
+.qpv.show{opacity:1}
+.qpv-hd{display:flex;align-items:center;gap:9px;margin-bottom:9px;padding-bottom:9px;border-bottom:1px solid var(--border)}
+.qpv-name{font-size:13.5px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.qpv-sub{font-size:11px;color:var(--text2)}
+.qpv-row{display:flex;justify-content:space-between;font-size:12px;padding:3px 0;gap:8px}
+.qpv-row .k{color:var(--text2);flex-shrink:0}
+.qpv-row .v{font-weight:600;text-align:right}
+.qpv-hint{font-size:10px;color:var(--text3);text-align:center;margin-top:8px;padding-top:7px;border-top:1px solid var(--border)}
+/* Vista previa compacta — móvil (bottom-sheet pequeño tras long-press) */
+.qpv-mob-ovl{display:none;position:fixed;inset:0;z-index:449;background:rgba(0,0,0,.4)}
+.qpv-mob-ovl.show{display:block}
+.qpv-mob{position:fixed;left:0;right:0;bottom:0;z-index:450;background:var(--bg2);border-radius:18px 18px 0 0;border:1px solid var(--border2);padding:16px 18px calc(16px + env(safe-area-inset-bottom,0px));transform:translateY(100%);transition:transform .25s cubic-bezier(.4,0,.2,1);box-shadow:0 -8px 32px rgba(0,0,0,.3)}
+.qpv-mob.show{transform:translateY(0)}
+.qpv-mob-handle{width:36px;height:4px;background:var(--border2);border-radius:99px;margin:0 auto 14px}
 .toast.sh{opacity:1;transform:translateX(-50%) translateY(0)}
 .toast.ok{border-left:3px solid var(--gr)}.toast.er{border-left:3px solid var(--rd)}.toast.in{border-left:3px solid var(--pu)}
 /* UTILS */
@@ -694,6 +711,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
     <div class="nlbl">Principal</div>
     <button class="nb on" onclick="go('dashboard',this)"><span class="ico">📊</span>Dashboard</button>
     <button class="nb" onclick="go('pacientes',this)"><span class="ico">👩</span>Pacientes<span class="bdg" id="bdgP">0</span></button>
+    <button class="nb" onclick="go('revisiones',this)"><span class="ico">📅</span>Revisiones<span class="bdg" id="bdgRev" style="display:none;background:var(--rd)">0</span></button>
     <button class="nb" onclick="go('nueva',this)"><span class="ico">➕</span>Nueva Paciente</button>
     <div class="nlbl">Evaluación</div>
     <button class="nb" onclick="go('algoritmos',this)"><span class="ico">🔬</span>Algoritmos Dx</button>
@@ -778,9 +796,84 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
       <select class="fc" style="width:auto;padding:6px 9px;font-size:12px" id="fltG" onchange="rPL()">
         <option value="">Todas</option><option value="si">Desean gestación</option><option value="no">No gestación</option>
       </select>
+      <button class="btn bs bsm" id="fltAdvToggle" onclick="toggleAdvFilters()">🔍 Filtros avanzados</button>
     </div>
   </div>
+
+  <!-- Chips de filtros guardados -->
+  <div id="savedFiltersBar" style="display:none;margin-bottom:10px"></div>
+
+  <!-- Panel de filtros avanzados (colapsable) -->
+  <div id="advFiltersPanel" class="card mb3" style="display:none">
+    <div class="g3 mb3">
+      <div class="fg" style="margin-bottom:0">
+        <label class="fl">Edad (años)</label>
+        <div class="flex g1 aic">
+          <input type="number" class="fc" id="fltEdadMin" placeholder="Mín" min="0" max="100" style="padding:6px 8px" oninput="rPL()">
+          <span class="c3">–</span>
+          <input type="number" class="fc" id="fltEdadMax" placeholder="Máx" min="0" max="100" style="padding:6px 8px" oninput="rPL()">
+        </div>
+      </div>
+      <div class="fg" style="margin-bottom:0">
+        <label class="fl">EVA actual (máx. dis/pélvico)</label>
+        <div class="flex g1 aic">
+          <input type="number" class="fc" id="fltEvaMin" placeholder="Mín" min="0" max="10" style="padding:6px 8px" oninput="rPL()">
+          <span class="c3">–</span>
+          <input type="number" class="fc" id="fltEvaMax" placeholder="Máx" min="0" max="10" style="padding:6px 8px" oninput="rPL()">
+        </div>
+      </div>
+      <div class="fg" style="margin-bottom:0">
+        <label class="fl">Revisión</label>
+        <select class="fc" id="fltRevPend" style="padding:6px 8px" onchange="rPL()">
+          <option value="">Todas</option>
+          <option value="si">Solo con revisión pendiente</option>
+          <option value="vencida">Solo revisión vencida</option>
+        </select>
+      </div>
+    </div>
+    <div class="g2 mb3">
+      <div class="fg" style="margin-bottom:0">
+        <label class="fl">Estadio rASRM</label>
+        <div class="chips" id="fltASRM">
+          <div class="chip" onclick="ck(this);rPL()" data-v="I">I</div>
+          <div class="chip" onclick="ck(this);rPL()" data-v="II">II</div>
+          <div class="chip" onclick="ck(this);rPL()" data-v="III">III</div>
+          <div class="chip" onclick="ck(this);rPL()" data-v="IV">IV</div>
+        </div>
+      </div>
+      <div class="fg" style="margin-bottom:0">
+        <label class="fl">Tipo FIGO (miomas)</label>
+        <div class="chips" id="fltFIGO">
+          <div class="chip" onclick="ck(this);rPL()" data-v="0">0</div>
+          <div class="chip" onclick="ck(this);rPL()" data-v="1">1</div>
+          <div class="chip" onclick="ck(this);rPL()" data-v="2">2</div>
+          <div class="chip" onclick="ck(this);rPL()" data-v="3">3</div>
+          <div class="chip" onclick="ck(this);rPL()" data-v="4">4</div>
+          <div class="chip" onclick="ck(this);rPL()" data-v="5">5</div>
+          <div class="chip" onclick="ck(this);rPL()" data-v="6">6</div>
+          <div class="chip" onclick="ck(this);rPL()" data-v="7">7</div>
+          <div class="chip" onclick="ck(this);rPL()" data-v="8">8</div>
+        </div>
+      </div>
+    </div>
+    <div class="flex jcb aic g2u wrap" style="border-top:1px solid var(--border);padding-top:10px">
+      <button class="btn bg bsm" onclick="clearAdvFilters()">✕ Limpiar filtros</button>
+      <button class="btn bp bsm" onclick="openSaveFilterModal()">💾 Guardar filtro actual</button>
+    </div>
+  </div>
+
   <div id="pList"></div>
+</div>
+<!-- REVISIONES -->
+<div id="s-revisiones" class="sec">
+  <div class="flex aic jcb mb3 g2u wrap">
+    <div class="sm c2"><span id="cntRev">0</span> pacientes con revisión programada</div>
+    <select class="fc" style="width:auto;padding:6px 9px;font-size:12px" id="revSort" onchange="rRevList()">
+      <option value="asc">Fecha más próxima primero</option>
+      <option value="desc">Fecha más lejana primero</option>
+    </select>
+  </div>
+  <div id="revList"></div>
 </div>
 <!-- NUEVA -->
 <div id="s-nueva" class="sec">
@@ -1764,6 +1857,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
 <!-- MORE MENU -->
 <div id="moreMenu" style="display:none;position:fixed;bottom:60px;right:0;left:0;z-index:140;background:var(--bg2);border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:8px 0;box-shadow:0 -4px 20px rgba(0,0,0,.2)">
   <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:0">
+    <button class="bi" style="padding:12px 4px" onclick="moreGo('revisiones')"><span class="ic" style="font-size:17px">📅</span>Revisiones</button>
     <button class="bi" style="padding:12px 4px" onclick="moreGo('tratamiento')"><span class="ic" style="font-size:17px">💊</span>Tratamiento</button>
     <button class="bi" style="padding:12px 4px" onclick="moreGo('fertilidad')"><span class="ic" style="font-size:17px">🌱</span>Fertilidad</button>
     <button class="bi" style="padding:12px 4px" onclick="moreGo('scores')"><span class="ic" style="font-size:17px">📏</span>Escalas</button>
@@ -1945,9 +2039,96 @@ function toggleTheme(){
 applyT();
 
 // ═══════════════════════════════════════════════
+// FILTROS GUARDADOS (localStorage — texto ligero, no datos clínicos)
+// ═══════════════════════════════════════════════
+const SAVED_FILTERS_KEY='gapp2_saved_filters';
+
+function getSavedFilters(){
+  try{return JSON.parse(localStorage.getItem(SAVED_FILTERS_KEY)||'[]');}
+  catch(e){return[];}
+}
+
+function setSavedFilters(arr){
+  try{localStorage.setItem(SAVED_FILTERS_KEY,JSON.stringify(arr));}
+  catch(e){console.error('Error guardando filtros:',e);}
+}
+
+function openSaveFilterModal(){
+  const f=getActiveFilters();
+  const hasAny=f.dx||f.gesta||f.edadMin||f.edadMax||f.evaMin||f.evaMax||f.revPend||f.asrm.length||f.figo.length;
+  if(!hasAny){tst('Aplica al menos un filtro antes de guardar','er');return;}
+
+  let existing=document.getElementById('saveFilterModal');
+  if(existing)existing.remove();
+
+  const m=document.createElement('div');
+  m.id='saveFilterModal';
+  m.style.cssText='position:fixed;inset:0;z-index:500;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;padding:16px';
+  m.innerHTML=`
+    <div style="background:var(--card);border:1px solid var(--border2);border-radius:var(--r);max-width:380px;width:100%;overflow:hidden;box-shadow:var(--shadow)">
+      <div style="padding:13px 16px;border-bottom:1px solid var(--border)">
+        <div style="font-weight:700;font-size:14px;color:var(--pk)">💾 Guardar filtro</div>
+      </div>
+      <div style="padding:14px 16px">
+        <label class="fl">Nombre del filtro</label>
+        <input class="fc" id="saveFilterName" placeholder="Ej: Pendientes histeroscopia" autofocus>
+      </div>
+      <div style="padding:10px 16px;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end">
+        <button class="btn bs bsm" onclick="document.getElementById('saveFilterModal').remove()">Cancelar</button>
+        <button class="btn bp bsm" onclick="confirmSaveFilter()">Guardar</button>
+      </div>
+    </div>`;
+  document.body.appendChild(m);
+  setTimeout(()=>{const inp=document.getElementById('saveFilterName');if(inp)inp.focus();},100);
+}
+
+function confirmSaveFilter(){
+  const name=(document.getElementById('saveFilterName').value||'').trim();
+  if(!name){tst('Escribe un nombre para el filtro','er');return;}
+  const filters=getSavedFilters();
+  const f=getActiveFilters();
+  delete f.search; // el texto de búsqueda no se guarda, es contextual
+  filters.push({id:'f_'+Date.now(),name,filters:f});
+  setSavedFilters(filters);
+  document.getElementById('saveFilterModal').remove();
+  renderSavedFiltersBar();
+  tst('Filtro «'+name+'» guardado ✓','ok');
+}
+
+function deleteSavedFilter(id){
+  if(!confirm('¿Eliminar este filtro guardado?'))return;
+  const filters=getSavedFilters().filter(f=>f.id!==id);
+  setSavedFilters(filters);
+  renderSavedFiltersBar();
+  tst('Filtro eliminado','er');
+}
+
+function applySavedFilter(id){
+  const f=getSavedFilters().find(x=>x.id===id);
+  if(!f)return;
+  applyFiltersToDOM(f.filters);
+  tst('Filtro «'+f.name+'» aplicado','ok');
+}
+
+function renderSavedFiltersBar(){
+  const bar=document.getElementById('savedFiltersBar');
+  if(!bar)return;
+  const filters=getSavedFilters();
+  if(!filters.length){bar.style.display='none';bar.innerHTML='';return;}
+  bar.style.display='flex';
+  bar.style.flexWrap='wrap';
+  bar.style.gap='6px';
+  bar.innerHTML=filters.map(f=>`
+    <div style="display:inline-flex;align-items:center;gap:5px;padding:4px 5px 4px 11px;border-radius:99px;background:rgba(112,96,240,.12);border:1px solid rgba(112,96,240,.3);font-size:12px;color:var(--pu);cursor:pointer" onclick="applySavedFilter('${f.id}')">
+      <span>🔖 ${f.name}</span>
+      <button onclick="event.stopPropagation();deleteSavedFilter('${f.id}')" style="background:none;border:none;color:var(--pu);opacity:.6;cursor:pointer;font-size:13px;padding:2px 4px;line-height:1" title="Eliminar">✕</button>
+    </div>`).join('');
+}
+
+// ═══════════════════════════════════════════════
 // NAV
 // ═══════════════════════════════════════════════
-const ttls={dashboard:'Dashboard',pacientes:'Pacientes',nueva:'Nueva Paciente',
+const ttls={dashboard:'Dashboard',pacientes:'Pacientes',revisiones:'Revisiones',nueva:'Nueva Paciente',
   algoritmos:'Algoritmos Dx',tratamiento:'Tratamiento',fertilidad:'Fertilidad',
   scores:'Escalas & Scores',guias:'Guías 2025',informes:'Informes'};
 
@@ -1959,7 +2140,8 @@ function go(id,btn){
   if(btn)btn.classList.add('on');
   document.getElementById('ttl').textContent=ttls[id]||id;
   cls();
-  if(id==='pacientes')rPL();
+  if(id==='pacientes'){rPL();renderSavedFiltersBar();}
+  if(id==='revisiones')rRevList();
   if(id==='dashboard'){uSt();dRec();}
   if(id==='informes'){fRS();setTimeout(initInfTab,50);}
   if(id==='nueva'&&!eId)clr();
@@ -2441,21 +2623,96 @@ function ini(n){return n.split(/[\s,]+/).filter(Boolean).slice(0,2).map(x=>x[0])
 function age(d){if(!d)return'?';return Math.floor((new Date()-new Date(d))/(365.25*24*3600*1000));}
 const dxT=dx=>({endometriosis:'<span class="tag tp">Endometriosis</span>',miomas:'<span class="tag to">Miomas</span>',ambas:'<span class="tag tpu">Endo+Miomas</span>',sospecha:'<span class="tag tgr">Sospecha</span>'}[dx]||'<span class="tag tgr">Sin dx</span>');
 
+// Toggle panel de filtros avanzados
+function toggleAdvFilters(){
+  const panel=document.getElementById('advFiltersPanel');
+  const btn=document.getElementById('fltAdvToggle');
+  const open=panel.style.display!=='none';
+  panel.style.display=open?'none':'block';
+  if(btn)btn.classList.toggle('on',!open);
+}
+
+function clearAdvFilters(){
+  ['fltEdadMin','fltEdadMax','fltEvaMin','fltEvaMax'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
+  document.getElementById('fltRevPend').value='';
+  ['fltASRM','fltFIGO'].forEach(id=>document.querySelectorAll('#'+id+' .chip').forEach(c=>c.classList.remove('on')));
+  rPL();
+}
+
+// Lee el estado actual de todos los filtros (básicos + avanzados)
+function getActiveFilters(){
+  return{
+    search:(document.getElementById('gs').value||'').toLowerCase(),
+    dx:document.getElementById('fltD').value,
+    gesta:document.getElementById('fltG').value,
+    edadMin:document.getElementById('fltEdadMin').value,
+    edadMax:document.getElementById('fltEdadMax').value,
+    evaMin:document.getElementById('fltEvaMin').value,
+    evaMax:document.getElementById('fltEvaMax').value,
+    revPend:document.getElementById('fltRevPend').value,
+    asrm:[...document.querySelectorAll('#fltASRM .chip.on')].map(c=>c.dataset.v),
+    figo:[...document.querySelectorAll('#fltFIGO .chip.on')].map(c=>c.dataset.v)
+  };
+}
+
+// Aplica un objeto de filtros guardado a los controles del DOM
+function applyFiltersToDOM(f){
+  document.getElementById('fltD').value=f.dx||'';
+  document.getElementById('fltG').value=f.gesta||'';
+  document.getElementById('fltEdadMin').value=f.edadMin||'';
+  document.getElementById('fltEdadMax').value=f.edadMax||'';
+  document.getElementById('fltEvaMin').value=f.evaMin||'';
+  document.getElementById('fltEvaMax').value=f.evaMax||'';
+  document.getElementById('fltRevPend').value=f.revPend||'';
+  document.querySelectorAll('#fltASRM .chip').forEach(c=>c.classList.toggle('on',(f.asrm||[]).includes(c.dataset.v)));
+  document.querySelectorAll('#fltFIGO .chip').forEach(c=>c.classList.toggle('on',(f.figo||[]).includes(c.dataset.v)));
+  // Abrir el panel si hay filtros avanzados activos
+  const hasAdv=f.edadMin||f.edadMax||f.evaMin||f.evaMax||f.revPend||(f.asrm||[]).length||(f.figo||[]).length;
+  if(hasAdv){
+    document.getElementById('advFiltersPanel').style.display='block';
+    document.getElementById('fltAdvToggle').classList.add('on');
+  }
+  rPL();
+}
+
 function rPL(){
   const cont=document.getElementById('pList');
-  const search=(document.getElementById('gs').value||'').toLowerCase();
-  const dF=document.getElementById('fltD').value;
-  const gF=document.getElementById('fltG').value;
+  const f=getActiveFilters();
   let list=DB.filter(p=>{
-    const ms=!search||p.nombre.toLowerCase().includes(search)||(p.nhc||'').toLowerCase().includes(search);
-    const md=!dF||p.dx===dF;
-    const mg=!gF||(gF==='si'?p.deseoGestacion==='si'||p.deseoGestacion==='futuro':p.deseoGestacion==='no');
-    return ms&&md&&mg;
+    const ms=!f.search||p.nombre.toLowerCase().includes(f.search)||(p.nhc||'').toLowerCase().includes(f.search);
+    const md=!f.dx||p.dx===f.dx;
+    const mg=!f.gesta||(f.gesta==='si'?p.deseoGestacion==='si'||p.deseoGestacion==='futuro':p.deseoGestacion==='no');
+
+    // Edad
+    const edad=age(p.fechaNac);
+    const me=(f.edadMin===''&&f.edadMax==='')||(typeof edad==='number'&&
+      (f.edadMin===''||edad>=parseInt(f.edadMin))&&(f.edadMax===''||edad<=parseInt(f.edadMax)));
+
+    // EVA actual — máximo entre evaD y evaP
+    const evaMax=Math.max(parseFloat(p.evaD)||0,parseFloat(p.evaP)||0);
+    const meva=(f.evaMin===''&&f.evaMax==='')||
+      ((f.evaMin===''||evaMax>=parseFloat(f.evaMin))&&(f.evaMax===''||evaMax<=parseFloat(f.evaMax)));
+
+    // Revisión pendiente / vencida
+    let mrev=true;
+    if(f.revPend==='si'){
+      mrev=!!p.proxRev;
+    } else if(f.revPend==='vencida'){
+      mrev=!!p.proxRev&&new Date(p.proxRev)<new Date();
+    }
+
+    // rASRM (multiselección — coincide si el estadio de la paciente está en la lista)
+    const masrm=!f.asrm.length||f.asrm.includes(p.asrm);
+
+    // FIGO (multiselección)
+    const mfigo=!f.figo.length||f.figo.includes(String(p.figo));
+
+    return ms&&md&&mg&&me&&meva&&mrev&&masrm&&mfigo;
   });
   document.getElementById('cntP').textContent=list.length;
   if(!list.length){cont.innerHTML=`<div class="empty"><div class="ei">👩‍⚕️</div><h3>Sin resultados</h3><div>No hay pacientes que coincidan</div><button class="btn bp mt3" onclick="go('nueva',null)">+ Registrar paciente</button></div>`;return;}
   cont.innerHTML=list.map(p=>`
-    <div class="pr" onclick="vPt('${p.id}')">
+    <div class="pr" data-pid="${p.id}" onclick="vPt('${p.id}')">
       <div class="pav" style="background:${avC(p.nombre)}1a;color:${avC(p.nombre)};border:1.5px solid ${avC(p.nombre)}33">${ini(p.nombre)}</div>
       <div class="pi">
         <div class="pn">${p.nombre}</div>
@@ -2468,7 +2725,6 @@ function rPL(){
       </div>
     </div>`).join('');
 }
-function flt(v){rPL();}
 function eById(id){const p=DB.find(x=>x.id===id);if(!p)return;fillF(p);go('nueva',document.querySelectorAll('.nb')[2]);}
 
 // ═══════════════════════════════════════════════
@@ -3754,7 +4010,9 @@ function buildReviewAlerts(){
     const diff=Math.ceil((new Date(p.proxRev)-today)/(24*3600*1000));
     return diff<=14;
   }).sort((a,b)=>new Date(a.proxRev)-new Date(b.proxRev)).slice(0,4);
-  if(!upcoming.length){el.innerHTML='<div class="xs c2" style="padding:6px 0">✓ Sin revisiones próximas pendientes</div>';return;}
+  const totalConRev=DB.filter(p=>p.proxRev).length;
+  const verTodas=totalConRev>0?`<div style="text-align:right;margin-top:4px"><button class="btn bg bsm" style="font-size:11.5px;padding:3px 8px" onclick="go('revisiones',null)">Ver todas (${totalConRev}) →</button></div>`:'';
+  if(!upcoming.length){el.innerHTML='<div class="xs c2" style="padding:6px 0">✓ Sin revisiones próximas pendientes</div>'+verTodas;return;}
   el.innerHTML=upcoming.map(p=>{
     const d=new Date(p.proxRev);
     const diff=Math.ceil((d-today)/(24*3600*1000));
@@ -3765,7 +4023,63 @@ function buildReviewAlerts(){
       <div style="flex:1;min-width:0"><div class="sm f6" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${p.nombre}</div><div class="xs c2">${d.toLocaleDateString('es',{day:'numeric',month:'short'})}</div></div>
       <span class="tag ${ov?'tr':'to'}" style="flex-shrink:0">${lbl}</span>
     </div>`;
-  }).join('');
+  }).join('')+verTodas;
+}
+
+// ── Sección completa de Revisiones (📅 menú lateral) ──
+function rRevList(){
+  const cont=document.getElementById('revList');
+  if(!cont)return;
+  const today=new Date();
+  const sortDir=document.getElementById('revSort')?document.getElementById('revSort').value:'asc';
+
+  const withRev=DB.filter(p=>p.proxRev).map(p=>{
+    const d=new Date(p.proxRev);
+    const diff=Math.ceil((d-today)/(24*3600*1000));
+    return{p,d,diff};
+  });
+
+  document.getElementById('cntRev').textContent=withRev.length;
+
+  if(!withRev.length){
+    cont.innerHTML='<div class="empty"><div class="ei">📅</div><h3>Sin revisiones programadas</h3><div>Las pacientes con fecha de próxima revisión aparecerán aquí</div></div>';
+    return;
+  }
+
+  const vencidas=withRev.filter(x=>x.diff<0).sort((a,b)=>sortDir==='asc'?a.d-b.d:b.d-a.d);
+  const proximas=withRev.filter(x=>x.diff>=0&&x.diff<=7).sort((a,b)=>sortDir==='asc'?a.d-b.d:b.d-a.d);
+  const futuras=withRev.filter(x=>x.diff>7).sort((a,b)=>sortDir==='asc'?a.d-b.d:b.d-a.d);
+
+  const rowHTML=(x)=>{
+    const{p,d,diff}=x;
+    const ov=diff<0;
+    const lbl=ov?`Vencida hace ${Math.abs(diff)}d`:diff===0?'Hoy':diff===1?'Mañana':`En ${diff}d`;
+    const tagCls=ov?'tr':diff<=7?'to':'tgr';
+    return`<div class="pr" data-pid="${p.id}" onclick="vPt('${p.id}')">
+      <div class="pav" style="background:${avC(p.nombre)}1a;color:${avC(p.nombre)};border:1.5px solid ${avC(p.nombre)}33">${ini(p.nombre)}</div>
+      <div class="pi">
+        <div class="pn">${p.nombre}</div>
+        <div class="pm">${d.toLocaleDateString('es',{day:'numeric',month:'long',year:'numeric'})}${p.nhc?' · NHC:'+p.nhc:''}</div>
+        <div class="ptg">${dxT(p.dx)}</div>
+      </div>
+      <span class="tag ${tagCls}" style="flex-shrink:0">${lbl}</span>
+    </div>`;
+  };
+
+  const groupHTML=(title,items,colorVar)=>{
+    if(!items.length)return'';
+    return`<div class="mb4">
+      <div class="xs f7" style="color:${colorVar};text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px;display:flex;align-items:center;gap:6px">
+        ${title} <span class="tag tgr" style="font-size:10px">${items.length}</span>
+      </div>
+      ${items.map(rowHTML).join('')}
+    </div>`;
+  };
+
+  cont.innerHTML=
+    groupHTML('🔴 Vencidas',vencidas,'var(--rd)')+
+    groupHTML('🟠 Próximos 7 días',proximas,'var(--or)')+
+    groupHTML('📅 Próximas revisiones',futuras,'var(--text2)');
 }
 
 function uBdg(){
@@ -3775,6 +4089,11 @@ function uBdg(){
   if(b){
     b.textContent=ov===1?'1 vencida':ov+' vencidas';
     b.style.display=ov?'inline-flex':'none';
+  }
+  const bRev=document.getElementById('bdgRev');
+  if(bRev){
+    bRev.textContent=ov;
+    bRev.style.display=ov?'inline-flex':'none';
   }
 }
 
@@ -3789,7 +4108,7 @@ function dRec(){
     const d=new Date(p.updatedAt||p.createdAt);
     const diff=Math.floor((new Date()-d)/(24*3600*1000));
     const tStr=diff===0?'Hoy':diff===1?'Ayer':diff<7?`Hace ${diff}d`:d.toLocaleDateString('es',{day:'numeric',month:'short'});
-    return`<div class="pr" onclick="vPt('${p.id}')">
+    return`<div class="pr" data-pid="${p.id}" onclick="vPt('${p.id}')">
       <div class="pav" style="width:32px;height:32px;font-size:11px;background:${avC(p.nombre)}1a;color:${avC(p.nombre)}">${ini(p.nombre)}</div>
       <div class="pi"><div class="pn sm">${p.nombre}</div><div class="pm">${age(p.fechaNac)} años · ${dxT(p.dx)}</div></div>
       <div class="xs c3" style="flex-shrink:0">${tStr}</div>
@@ -4286,6 +4605,159 @@ document.addEventListener('keydown',e=>{
   if(e.key==='Escape'){cM();}
   if(e.ctrlKey&&e.key==='k'){e.preventDefault();document.getElementById('gs').focus();}
 });
+
+// ═══════════════════════════════════════════════
+// VISTA PREVIA COMPACTA — hover (desktop) / long-press (móvil)
+// Delegado sobre document: funciona en cualquier fila .pr[data-pid]
+// ═══════════════════════════════════════════════
+(()=>{
+  let hoverTimer=null;     // delay antes de mostrar en desktop
+  let hoverEl=null;        // popover actual desktop
+  let lpTimer=null;        // timer de long-press móvil
+  let lpFired=false;       // si el long-press ya disparó (para cancelar el click posterior)
+  let lpStartX=0,lpStartY=0;
+  const LP_MS=480;         // duración para considerar long-press
+  const LP_MOVE_TOL=10;    // tolerancia de movimiento en px antes de cancelar
+
+  function buildQuickPreview(p){
+    const evaD=p.evaD||0,evaP=p.evaP||0;
+    const evaMax=Math.max(parseFloat(evaD)||0,parseFloat(evaP)||0);
+    const evaCol=evaMax<=3?'var(--gr)':evaMax<=6?'var(--or)':'var(--rd)';
+    let revHTML='';
+    if(p.proxRev){
+      const d=new Date(p.proxRev);
+      const diff=Math.ceil((d-new Date())/(24*3600*1000));
+      const ov=diff<0;
+      revHTML=`<div class="qpv-row"><span class="k">📅 Revisión</span><span class="v" style="color:${ov?'var(--rd)':'var(--text)'}">${ov?'Vencida':d.toLocaleDateString('es',{day:'numeric',month:'short'})}</span></div>`;
+    }
+    return`
+      <div class="qpv-hd">
+        <div class="pav" style="width:36px;height:36px;font-size:13px;background:${avC(p.nombre)}1a;color:${avC(p.nombre)};border:1.5px solid ${avC(p.nombre)}33;flex-shrink:0">${ini(p.nombre)}</div>
+        <div style="flex:1;min-width:0">
+          <div class="qpv-name">${p.nombre}</div>
+          <div class="qpv-sub">${age(p.fechaNac)} años${p.paridad?' · '+p.paridad:''}</div>
+        </div>
+      </div>
+      <div class="qpv-row"><span class="k">Diagnóstico</span><span class="v">${dxT(p.dx)}</span></div>
+      ${(evaD||evaP)?`<div class="qpv-row"><span class="k">EVA actual</span><span class="v" style="color:${evaCol}">${evaMax}/10</span></div>`:''}
+      ${p.estadoTx?`<div class="qpv-row"><span class="k">Tratamiento</span><span class="v">${p.estadoTx}</span></div>`:''}
+      ${revHTML}
+      ${(p.deseoGestacion==='si'||p.deseoGestacion==='futuro')?`<div class="qpv-row"><span class="k">🌱 Gestación</span><span class="v">${p.deseoGestacion==='si'?'Inmediata':'Futura'}</span></div>`:''}`;
+  }
+
+  function showDesktopPreview(row,p){
+    removeDesktopPreview();
+    const el=document.createElement('div');
+    el.className='qpv';
+    el.innerHTML=buildQuickPreview(p)+'<div class="qpv-hint">Clic para abrir ficha completa</div>';
+    document.body.appendChild(el);
+    hoverEl=el;
+
+    const rect=row.getBoundingClientRect();
+    const elW=260,elH=el.offsetHeight||180;
+    let left=rect.right+10;
+    let top=rect.top;
+    if(left+elW>window.innerWidth-10)left=rect.left-elW-10;
+    if(left<10)left=10;
+    if(top+elH>window.innerHeight-10)top=window.innerHeight-elH-10;
+    if(top<10)top=10;
+    el.style.left=left+'px';
+    el.style.top=top+'px';
+    requestAnimationFrame(()=>el.classList.add('show'));
+  }
+
+  function removeDesktopPreview(){
+    if(hoverEl){hoverEl.remove();hoverEl=null;}
+  }
+
+  document.addEventListener('mouseover',e=>{
+    if(window.matchMedia('(hover:none)').matches)return;
+    const row=e.target.closest('.pr[data-pid]');
+    if(!row)return;
+    clearTimeout(hoverTimer);
+    hoverTimer=setTimeout(()=>{
+      const p=DB.find(x=>x.id===row.dataset.pid);
+      if(p)showDesktopPreview(row,p);
+    },380);
+  });
+
+  document.addEventListener('mouseout',e=>{
+    const row=e.target.closest('.pr[data-pid]');
+    if(!row)return;
+    clearTimeout(hoverTimer);
+    if(e.relatedTarget&&e.relatedTarget.closest&&e.relatedTarget.closest('.qpv'))return;
+    removeDesktopPreview();
+  });
+
+  document.addEventListener('scroll',()=>removeDesktopPreview(),{passive:true});
+
+  function showMobilePreview(p){
+    let ovl=document.getElementById('qpvMobOvl');
+    let sheet=document.getElementById('qpvMobSheet');
+    if(!ovl){
+      ovl=document.createElement('div');
+      ovl.id='qpvMobOvl';
+      ovl.className='qpv-mob-ovl';
+      ovl.onclick=closeMobilePreview;
+      document.body.appendChild(ovl);
+    }
+    if(!sheet){
+      sheet=document.createElement('div');
+      sheet.id='qpvMobSheet';
+      sheet.className='qpv-mob';
+      document.body.appendChild(sheet);
+    }
+    sheet.innerHTML=`<div class="qpv-mob-handle"></div>${buildQuickPreview(p)}
+      <button class="btn bp wf mt3" style="justify-content:center" onclick="closeMobilePreview();vPt('${p.id}')">Ver ficha completa</button>`;
+    ovl.classList.add('show');
+    requestAnimationFrame(()=>sheet.classList.add('show'));
+  }
+
+  window.closeMobilePreview=function(){
+    const ovl=document.getElementById('qpvMobOvl');
+    const sheet=document.getElementById('qpvMobSheet');
+    if(ovl)ovl.classList.remove('show');
+    if(sheet)sheet.classList.remove('show');
+  };
+
+  document.addEventListener('touchstart',e=>{
+    const row=e.target.closest('.pr[data-pid]');
+    if(!row)return;
+    if(e.target.closest('button'))return;
+    lpFired=false;
+    lpStartX=e.touches[0].clientX;
+    lpStartY=e.touches[0].clientY;
+    clearTimeout(lpTimer);
+    lpTimer=setTimeout(()=>{
+      const p=DB.find(x=>x.id===row.dataset.pid);
+      if(p){
+        lpFired=true;
+        if(navigator.vibrate)navigator.vibrate(8);
+        showMobilePreview(p);
+      }
+    },LP_MS);
+  },{passive:true});
+
+  document.addEventListener('touchmove',e=>{
+    if(!lpTimer)return;
+    const dx=Math.abs(e.touches[0].clientX-lpStartX);
+    const dy=Math.abs(e.touches[0].clientY-lpStartY);
+    if(dx>LP_MOVE_TOL||dy>LP_MOVE_TOL){clearTimeout(lpTimer);lpTimer=null;}
+  },{passive:true});
+
+  document.addEventListener('touchend',e=>{
+    clearTimeout(lpTimer);
+    lpTimer=null;
+    if(lpFired){
+      const row=e.target.closest('.pr[data-pid]');
+      if(row){
+        const blockClick=ev=>{ev.stopPropagation();ev.preventDefault();row.removeEventListener('click',blockClick,true);};
+        row.addEventListener('click',blockClick,true);
+      }
+      lpFired=false;
+    }
+  },{passive:true});
+})();
 
 // ═══════════════════════════════════════════════
 // SWIPE TO CLOSE MODAL (mobile)
